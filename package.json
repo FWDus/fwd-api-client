@@ -1,0 +1,14 @@
+{
+  "name": "FWD.api",
+  "description": "app.fwd.us API client library for JavaScript",
+  "repository": "FWDus/fwd-js-client",
+  "license": "MIT",
+  "version": "0.0.1",
+  "devDependencies": {
+    "grunt": "~0.4.5",
+    "grunt-contrib-coffee": "^1.0.0",
+    "grunt-contrib-concat": "^1.0.0",
+    "grunt-contrib-uglify": "^1.0.1",
+    "grunt-contrib-watch": "^1.0.0"
+  }
+}

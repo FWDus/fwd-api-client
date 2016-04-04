@@ -1,0 +1,67 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="http://cdn.jsdelivr.net/foundation/6.2.0/foundation.min.css">
+  <script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+  <script src="dist/fwd-api.full.min.js"></script>
+</head>
+<body>
+
+<div class="row">
+  <div class="small-12 columns">
+    <div>
+      <h3>Companies:</h3>
+      <a href="#" class="button companies-load-btn">Load All</a>
+    </div>
+    <ul class="companies"></ul>
+  </div>
+</div>
+
+<div class="row">
+  <div class="small-12 columns">
+    <div>
+      <h3>Stories:</h3>
+      <a href="#" class="button stories-load-btn">Load All</a>
+    </div>
+    <ul class="stories"></ul>
+  </div>
+</div>
+
+<script>
+  FWD.init('___public_api_key___');
+
+  $(function(){
+    $('.companies-load-btn').click(function(e){
+      e.preventDefault();
+
+      FWD.Company.loadAll().then(function(companies){
+        $.each(companies, function(ix, company){
+          $('.companies').append('<li>'+ company.get('name') + "</li>");
+        });
+      })
+    });
+
+    $('.stories-load-btn').click(function(e){
+      e.preventDefault();
+      FWD.Story.searchAll().then(function(stories){
+        var $stories = $('.stories');
+        $.each(stories, function(ix, story){
+          var $li = $("<li></li>").appendTo($stories);
+          $li.html(story.get('author'));
+
+          story.company().done(function(company) {
+            var html = $li.html();
+            html = html + ' - ' + company.get('name') + ' #' + story.get('company_id');
+            $li.html(html);
+          });
+        });
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
