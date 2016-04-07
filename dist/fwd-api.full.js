@@ -86,9 +86,7 @@ FWD.Api = (function() {
         collection = collection.concat(data[collectionName]);
         current_page = data.page;
         if (current_page < data.total_pages) {
-          $.extend(params, {
-            page: current_page + 1
-          });
+          params.page = current_page + 1;
           return Api.get(url, params).fail(defer.reject).done(onSuccess);
         } else {
           return defer.resolve(collection);
@@ -223,6 +221,7 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
 FWD.StorySearch = (function() {
   function StorySearch() {
     this._buildStories = bind(this._buildStories, this);
+    this._filterParamAdapter = bind(this._filterParamAdapter, this);
     this.searchAll = bind(this.searchAll, this);
     this.search = bind(this.search, this);
   }
@@ -235,7 +234,7 @@ FWD.StorySearch = (function() {
         var params;
         params = $.extend({
           per_page: 100
-        }, filterParams);
+        }, _this._filterParamAdapter(filterParams));
         return FWD.Api.get(_this.url, params).fail(defer.reject).done(function(data) {
           var stories;
           stories = _this._buildStories(data.stories);
@@ -249,7 +248,7 @@ FWD.StorySearch = (function() {
     return $.Deferred((function(_this) {
       return function(defer) {
         var allPages;
-        allPages = FWD.Api.getAllPages(_this.url, 'stories', filterParams);
+        allPages = FWD.Api.getAllPages(_this.url, 'stories', _this._filterParamAdapter(filterParams));
         return allPages.fail(defer.reject).done(function(storiesJson) {
           var stories;
           stories = _this._buildStories(storiesJson);
@@ -257,6 +256,15 @@ FWD.StorySearch = (function() {
         });
       };
     })(this)).promise();
+  };
+
+  StorySearch.prototype._filterParamAdapter = function(filter) {
+    var params;
+    params = $.extend({}, filter);
+    if ($.isArray(params.company)) {
+      params.company = params.company.join(',');
+    }
+    return params;
   };
 
   StorySearch.prototype._buildStories = function(storiesJson) {

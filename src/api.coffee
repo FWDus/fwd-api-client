@@ -13,7 +13,7 @@ class FWD.Api
         current_page = data.page
 
         if current_page < data.total_pages
-          $.extend(params, {page: current_page + 1})
+          params.page = current_page + 1
           @get(url, params).fail(defer.reject).done(onSuccess)
         else
           defer.resolve(collection)

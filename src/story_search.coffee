@@ -3,7 +3,7 @@ class FWD.StorySearch
 
   search: (filterParams)=>
     $.Deferred((defer)=>
-      params = $.extend({per_page: 100}, filterParams)
+      params = $.extend({per_page: 100}, @_filterParamAdapter(filterParams))
       FWD.Api.get(@url, params).fail(defer.reject).done (data) =>
         stories = @_buildStories(data.stories)
         defer.resolve(stories)
@@ -11,11 +11,17 @@ class FWD.StorySearch
 
   searchAll: (filterParams)=>
     $.Deferred((defer)=>
-      allPages = FWD.Api.getAllPages(@url, 'stories', filterParams)
+      allPages = FWD.Api.getAllPages(@url, 'stories', @_filterParamAdapter(filterParams))
       allPages.fail(defer.reject).done (storiesJson) =>
         stories = @_buildStories(storiesJson)
         defer.resolve(stories)
     ).promise()
+
+  _filterParamAdapter: (filter)=>
+    params = $.extend({}, filter) # clone
+    if $.isArray(params.company)
+      params.company = params.company.join(',')
+    params
 
   _buildStories: (storiesJson)=>
     $.map storiesJson, (storyAttrs) ->
