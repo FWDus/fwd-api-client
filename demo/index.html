@@ -30,6 +30,16 @@
   </div>
 </div>
 
+<div class="row">
+  <div class="small-12 columns">
+    <div>
+      <h3>Press:</h3>
+      <a href="#" class="button press-load-btn">Load A Page</a>
+    </div>
+    <ol class="press"></ol>
+  </div>
+</div>
+
 <script>
   FWD.init('___public_api_key___');
 
@@ -57,6 +67,26 @@
             html = html + ' - ' + company.get('name') + ' #' + story.get('company_id');
             $li.html(html);
           });
+        });
+      });
+    });
+
+    $('.press-load-btn').click(function(e){
+      e.preventDefault();
+      FWD.Article.press({tags: 'daca'}).then(function(articles){
+        var $press = $('.press');
+
+        $.each(articles, function(ix, article){
+          var $li = $("<li></li>").appendTo($press);
+          var html = '<div>';
+          html += '<h4>'+ article.get('title') +'</h4>';
+          if (article.get('image_url')) {
+            html += '<img src="'+ article.get('image_url') +'" />';
+          }
+
+          html += '</div>';
+
+          $li.html(html);
         });
       });
     });

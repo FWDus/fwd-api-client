@@ -5,6 +5,8 @@ class FWD.URL
       index: '/companies.json'
     stories:
       search: '/stories/search.json'
+    articles:
+      press: '/articles/press.json'
 
   @for: (route)->
     [model, action] = route.split('#')

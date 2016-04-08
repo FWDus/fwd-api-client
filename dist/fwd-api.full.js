@@ -28,6 +28,9 @@ FWD.URL = (function() {
     },
     stories: {
       search: '/stories/search.json'
+    },
+    articles: {
+      press: '/articles/press.json'
     }
   };
 
@@ -39,6 +42,21 @@ FWD.URL = (function() {
   };
 
   return URL;
+
+})();
+
+FWD.Helpers = (function() {
+  function Helpers() {}
+
+  Helpers.arrayParam = function(param) {
+    if ($.isArray(param)) {
+      return param.join(',');
+    } else {
+      return param;
+    }
+  };
+
+  return Helpers;
 
 })();
 
@@ -99,6 +117,27 @@ FWD.Api = (function() {
   return Api;
 
 })();
+
+var extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+  hasProp = {}.hasOwnProperty;
+
+FWD.Article = (function(superClass) {
+  extend(Article, superClass);
+
+  function Article() {
+    return Article.__super__.constructor.apply(this, arguments);
+  }
+
+  Article.press = function(filterParams) {
+    if (filterParams == null) {
+      filterParams = {};
+    }
+    return (new FWD.PressLoader).load(filterParams);
+  };
+
+  return Article;
+
+})(FWD.Model);
 
 var extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty;
@@ -174,6 +213,47 @@ FWD.CompanyLoader = (function() {
   };
 
   return CompanyLoader;
+
+})();
+
+var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+FWD.PressLoader = (function() {
+  function PressLoader() {
+    this._buildModels = bind(this._buildModels, this);
+    this._filterParamAdapter = bind(this._filterParamAdapter, this);
+    this.load = bind(this.load, this);
+  }
+
+  PressLoader.prototype.url = FWD.URL["for"]('articles#press');
+
+  PressLoader.prototype.load = function(filterParams) {
+    return $.Deferred((function(_this) {
+      return function(defer) {
+        var params;
+        params = _this._filterParamAdapter(filterParams);
+        return FWD.Api.get(_this.url, params).fail(defer.reject).done(function(data) {
+          var articles;
+          articles = _this._buildModels(data.articles);
+          return defer.resolve(articles);
+        });
+      };
+    })(this)).promise();
+  };
+
+  PressLoader.prototype._filterParamAdapter = function(params) {
+    params = $.extend({}, params);
+    params.tags = FWD.Helpers.arrayParam(params.tags);
+    return params;
+  };
+
+  PressLoader.prototype._buildModels = function(payload) {
+    return $.map(payload, function(articleAttrs) {
+      return new FWD.Article(articleAttrs);
+    });
+  };
+
+  return PressLoader;
 
 })();
 
@@ -261,9 +341,8 @@ FWD.StorySearch = (function() {
   StorySearch.prototype._filterParamAdapter = function(filter) {
     var params;
     params = $.extend({}, filter);
-    if ($.isArray(params.company)) {
-      params.company = params.company.join(',');
-    }
+    params.company = this._arrayParam(params.company);
+    params.tags = this._arrayParam(params.tags);
     return params;
   };
 
@@ -272,6 +351,8 @@ FWD.StorySearch = (function() {
       return new FWD.Story(storyAttrs);
     });
   };
+
+  StorySearch.prototype._arrayParam = FWD.Helpers.arrayParam;
 
   return StorySearch;
 
