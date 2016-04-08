@@ -19,10 +19,12 @@ class FWD.StorySearch
 
   _filterParamAdapter: (filter)=>
     params = $.extend({}, filter) # clone
-    if $.isArray(params.company)
-      params.company = params.company.join(',')
+    params.company = @_arrayParam(params.company)
+    params.tags = @_arrayParam(params.tags)
     params
 
   _buildStories: (storiesJson)=>
     $.map storiesJson, (storyAttrs) ->
       new FWD.Story(storyAttrs)
+
+  _arrayParam: FWD.Helpers.arrayParam
