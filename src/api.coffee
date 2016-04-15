@@ -5,7 +5,7 @@ class FWD.Api
 
   @getAllPages: (url, collectionName, params)=>
     $.Deferred((defer)=>
-      params = $.extend({}, params, {page: 1, per_page: 100})
+      params = $.extend({}, params, {page: 1, per_page: FWD.allPagesPerPage})
       collection = []
 
       onSuccess = (data)=>

@@ -13,6 +13,8 @@ FWD = (function() {
     })();
   };
 
+  FWD.allPagesPerPage = 100;
+
   return FWD;
 
 })();
@@ -27,6 +29,7 @@ FWD.URL = (function() {
       index: '/companies.json'
     },
     stories: {
+      index: '/stories.json',
       search: '/stories/search.json'
     },
     articles: {
@@ -45,28 +48,16 @@ FWD.URL = (function() {
 
 })();
 
-FWD.Helpers = (function() {
-  function Helpers() {}
-
-  Helpers.arrayParam = function(param) {
-    if ($.isArray(param)) {
-      return param.join(',');
-    } else {
-      return param;
-    }
-  };
-
-  return Helpers;
-
-})();
-
 var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 FWD.Model = (function() {
   function Model(attributes) {
-    this.attributes = attributes;
+    if (attributes == null) {
+      attributes = {};
+    }
     this.set = bind(this.set, this);
     this.get = bind(this.get, this);
+    this.attributes = $.extend({}, attributes);
   }
 
   Model.prototype.get = function(attr) {
@@ -78,6 +69,75 @@ FWD.Model = (function() {
   };
 
   return Model;
+
+})();
+
+FWD.Factory = (function() {
+  function Factory() {}
+
+  Factory.loadPageFunc = function(options) {
+    var arrayParams, collectionName, model, url;
+    url = options.url, model = options.model, collectionName = options.collectionName, arrayParams = options.arrayParams;
+    arrayParams || (arrayParams = []);
+    return function(filterParams) {
+      return $.Deferred(function(defer) {
+        var params;
+        params = Factory.convertArrayParams(filterParams, arrayParams);
+        return FWD.Api.get(url, params).fail(defer.reject).done(function(data) {
+          var models;
+          models = Factory.attributesToModels(data[collectionName], model);
+          return defer.resolve(models);
+        });
+      }).promise();
+    };
+  };
+
+  Factory.loadAllFunc = function(options) {
+    var arrayParams, cache, cachedPromise, collectionName, model, url;
+    url = options.url, model = options.model, collectionName = options.collectionName, arrayParams = options.arrayParams, cache = options.cache;
+    arrayParams || (arrayParams = []);
+    cachedPromise = null;
+    return function(filterParams) {
+      if (cache && cachedPromise) {
+        return cachedPromise;
+      } else {
+        return cachedPromise = $.Deferred(function(defer) {
+          var allPages, params;
+          params = Factory.convertArrayParams(filterParams, arrayParams);
+          allPages = FWD.Api.getAllPages(url, collectionName, params);
+          return allPages.fail(defer.reject).done(function(attrCollection) {
+            var models;
+            models = Factory.attributesToModels(attrCollection, model);
+            return defer.resolve(models);
+          });
+        }).promise();
+      }
+    };
+  };
+
+  Factory.convertArrayParams = function(params, arrayParamNames) {
+    params = $.extend({}, params);
+    $.each(arrayParamNames, function(ix, paramName) {
+      return params[paramName] = Factory.arrayParam(params[paramName]);
+    });
+    return params;
+  };
+
+  Factory.arrayParam = function(param) {
+    if ($.isArray(param)) {
+      return param.join(',');
+    } else {
+      return param;
+    }
+  };
+
+  Factory.attributesToModels = function(attrCollection, model) {
+    return $.map(attrCollection, function(modelAttrs) {
+      return new model(modelAttrs);
+    });
+  };
+
+  return Factory;
 
 })();
 
@@ -96,7 +156,7 @@ FWD.Api = (function() {
       var collection, onSuccess;
       params = $.extend({}, params, {
         page: 1,
-        per_page: 100
+        per_page: FWD.allPagesPerPage
       });
       collection = [];
       onSuccess = function(data) {
@@ -128,12 +188,12 @@ FWD.Article = (function(superClass) {
     return Article.__super__.constructor.apply(this, arguments);
   }
 
-  Article.press = function(filterParams) {
-    if (filterParams == null) {
-      filterParams = {};
-    }
-    return (new FWD.PressLoader).load(filterParams);
-  };
+  Article.press = FWD.Factory.loadPageFunc({
+    url: FWD.URL["for"]('articles#press'),
+    collectionName: 'articles',
+    model: Article,
+    arrayParams: ['tags']
+  });
 
   return Article;
 
@@ -149,27 +209,25 @@ FWD.Company = (function(superClass) {
     return Company.__super__.constructor.apply(this, arguments);
   }
 
-  Company.companies = null;
+  Company.loadAll = FWD.Factory.loadAllFunc({
+    url: FWD.URL["for"]('companies#index'),
+    collectionName: 'companies',
+    model: Company,
+    cache: true
+  });
 
-  Company.loadAll = function() {
-    Company.loadAllDeferred || (Company.loadAllDeferred = $.Deferred(function(defer) {
-      var loader;
-      loader = new FWD.CompanyLoader;
-      return loader.loadAll().fail(defer.reject).done(function(companies) {
-        Company.companies = companies;
-        return defer.resolve(Company.companies);
-      });
-    }).promise());
-    return Company.loadAllDeferred;
-  };
+  Company.load = FWD.Factory.loadPageFunc({
+    url: FWD.URL["for"]('companies#index'),
+    collectionName: 'companies',
+    model: Company
+  });
 
   Company.find = function(companyId) {
     return $.Deferred(function(defer) {
-      return Company.loadAll().fail(defer.reject).done(function() {
-        var company, i, len, ref;
-        ref = Company.companies;
-        for (i = 0, len = ref.length; i < len; i++) {
-          company = ref[i];
+      return Company.loadAll().fail(defer.reject).done(function(companies) {
+        var company, i, len;
+        for (i = 0, len = companies.length; i < len; i++) {
+          company = companies[i];
           if (company.get('id') === companyId) {
             defer.resolve(company);
             return;
@@ -184,79 +242,6 @@ FWD.Company = (function(superClass) {
 
 })(FWD.Model);
 
-var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
-
-FWD.CompanyLoader = (function() {
-  function CompanyLoader() {
-    this._buildCompanies = bind(this._buildCompanies, this);
-    this.loadAll = bind(this.loadAll, this);
-  }
-
-  CompanyLoader.prototype.url = FWD.URL["for"]('companies#index');
-
-  CompanyLoader.prototype.loadAll = function() {
-    return $.Deferred((function(_this) {
-      return function(defer) {
-        return FWD.Api.getAllPages(_this.url, 'companies', {}).fail(defer.reject).done(function(companiesJson) {
-          var companies;
-          companies = _this._buildCompanies(companiesJson);
-          return defer.resolve(companies);
-        });
-      };
-    })(this)).promise();
-  };
-
-  CompanyLoader.prototype._buildCompanies = function(payload) {
-    return $.map(payload, function(companyAttrs) {
-      return new FWD.Company(companyAttrs);
-    });
-  };
-
-  return CompanyLoader;
-
-})();
-
-var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
-
-FWD.PressLoader = (function() {
-  function PressLoader() {
-    this._buildModels = bind(this._buildModels, this);
-    this._filterParamAdapter = bind(this._filterParamAdapter, this);
-    this.load = bind(this.load, this);
-  }
-
-  PressLoader.prototype.url = FWD.URL["for"]('articles#press');
-
-  PressLoader.prototype.load = function(filterParams) {
-    return $.Deferred((function(_this) {
-      return function(defer) {
-        var params;
-        params = _this._filterParamAdapter(filterParams);
-        return FWD.Api.get(_this.url, params).fail(defer.reject).done(function(data) {
-          var articles;
-          articles = _this._buildModels(data.articles);
-          return defer.resolve(articles);
-        });
-      };
-    })(this)).promise();
-  };
-
-  PressLoader.prototype._filterParamAdapter = function(params) {
-    params = $.extend({}, params);
-    params.tags = FWD.Helpers.arrayParam(params.tags);
-    return params;
-  };
-
-  PressLoader.prototype._buildModels = function(payload) {
-    return $.map(payload, function(articleAttrs) {
-      return new FWD.Article(articleAttrs);
-    });
-  };
-
-  return PressLoader;
-
-})();
-
 var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty;
@@ -269,91 +254,36 @@ FWD.Story = (function(superClass) {
     return Story.__super__.constructor.apply(this, arguments);
   }
 
-  Story.search = function(filter) {
-    return (new FWD.StorySearch).search(filter);
-  };
+  Story.index = FWD.Factory.loadPageFunc({
+    url: FWD.URL["for"]('stories#index'),
+    collectionName: 'stories',
+    model: Story
+  });
 
-  Story.searchAll = function(filter) {
-    if (filter == null) {
-      filter = {};
-    }
-    return (new FWD.StorySearch).searchAll(filter);
-  };
+  Story.search = FWD.Factory.loadPageFunc({
+    url: FWD.URL["for"]('stories#search'),
+    collectionName: 'stories',
+    model: Story,
+    arrayParams: ['company', 'tags']
+  });
+
+  Story.searchAll = FWD.Factory.loadAllFunc({
+    url: FWD.URL["for"]('stories#search'),
+    collectionName: 'stories',
+    model: Story,
+    arrayParams: ['company', 'tags']
+  });
 
   Story.prototype.company = function() {
-    return $.Deferred((function(_this) {
-      return function(defer) {
-        if (_this.get('company_id')) {
-          return FWD.Company.find(_this.get('company_id')).then(defer.resolve, defer.reject);
-        } else {
-          return defer.reject();
-        }
-      };
-    })(this)).promise();
+    if (this.get('company_id')) {
+      return FWD.Company.find(this.get('company_id'));
+    } else {
+      return $.Deferred(function(defer) {
+        return defer.reject();
+      }).promise();
+    }
   };
 
   return Story;
 
 })(FWD.Model);
-
-var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
-
-FWD.StorySearch = (function() {
-  function StorySearch() {
-    this._buildStories = bind(this._buildStories, this);
-    this._filterParamAdapter = bind(this._filterParamAdapter, this);
-    this.searchAll = bind(this.searchAll, this);
-    this.search = bind(this.search, this);
-  }
-
-  StorySearch.prototype.url = FWD.URL["for"]('stories#search');
-
-  StorySearch.prototype.search = function(filterParams) {
-    return $.Deferred((function(_this) {
-      return function(defer) {
-        var params;
-        params = $.extend({
-          per_page: 100
-        }, _this._filterParamAdapter(filterParams));
-        return FWD.Api.get(_this.url, params).fail(defer.reject).done(function(data) {
-          var stories;
-          stories = _this._buildStories(data.stories);
-          return defer.resolve(stories);
-        });
-      };
-    })(this)).promise();
-  };
-
-  StorySearch.prototype.searchAll = function(filterParams) {
-    return $.Deferred((function(_this) {
-      return function(defer) {
-        var allPages;
-        allPages = FWD.Api.getAllPages(_this.url, 'stories', _this._filterParamAdapter(filterParams));
-        return allPages.fail(defer.reject).done(function(storiesJson) {
-          var stories;
-          stories = _this._buildStories(storiesJson);
-          return defer.resolve(stories);
-        });
-      };
-    })(this)).promise();
-  };
-
-  StorySearch.prototype._filterParamAdapter = function(filter) {
-    var params;
-    params = $.extend({}, filter);
-    params.company = this._arrayParam(params.company);
-    params.tags = this._arrayParam(params.tags);
-    return params;
-  };
-
-  StorySearch.prototype._buildStories = function(storiesJson) {
-    return $.map(storiesJson, function(storyAttrs) {
-      return new FWD.Story(storyAttrs);
-    });
-  };
-
-  StorySearch.prototype._arrayParam = FWD.Helpers.arrayParam;
-
-  return StorySearch;
-
-})();

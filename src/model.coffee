@@ -1,5 +1,6 @@
 class FWD.Model
-  constructor: (@attributes)->
+  constructor: (attributes = {})->
+    @attributes = $.extend({}, attributes)
 
   get: (attr)=>
     @attributes[attr]

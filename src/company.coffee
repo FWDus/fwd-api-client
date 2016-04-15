@@ -1,20 +1,21 @@
 class FWD.Company extends FWD.Model
-  @companies: null
+  @loadAll: FWD.Factory.loadAllFunc(
+    url: FWD.URL.for('companies#index'),
+    collectionName: 'companies',
+    model: this,
+    cache: true
+  )
 
-  @loadAll: =>
-    @loadAllDeferred ||= $.Deferred((defer)=>
-      loader = new FWD.CompanyLoader
-      loader.loadAll().fail(defer.reject).done (companies)=>
-        @companies = companies
-        defer.resolve(@companies)
-    ).promise()
-
-    @loadAllDeferred
+  @load: FWD.Factory.loadPageFunc(
+    url: FWD.URL.for('companies#index'),
+    collectionName: 'companies',
+    model: this
+  )
 
   @find: (companyId)=>
     $.Deferred((defer)=>
-      @loadAll().fail(defer.reject).done =>
-        for company in @companies
+      @loadAll().fail(defer.reject).done (companies)=>
+        for company in companies
           if company.get('id') == companyId
             defer.resolve(company)
             return

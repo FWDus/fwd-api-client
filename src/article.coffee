@@ -1,3 +1,7 @@
 class FWD.Article extends FWD.Model
-  @press: (filterParams = {})=>
-    (new FWD.PressLoader).load(filterParams)
+  @press: FWD.Factory.loadPageFunc(
+    url: FWD.URL.for('articles#press'),
+    collectionName: 'articles',
+    model: this,
+    arrayParams: ['tags']
+  )

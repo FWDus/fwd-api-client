@@ -4,91 +4,190 @@
   <meta charset="utf-8" />
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="http://cdn.jsdelivr.net/foundation/6.2.0/foundation.min.css">
-  <script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
-  <script src="../dist/fwd-api.full.min.js"></script>
+  <title>FWD.us API client demo</title>
+  <link rel="stylesheet" href="http://cdn.jsdelivr.net/foundation/6.2.1/foundation.min.css">
 </head>
 <body>
 
 <div class="row">
   <div class="small-12 columns">
-    <div>
-      <h3>Companies:</h3>
-      <a href="#" class="button companies-load-btn">Load All</a>
+    <br />
+    <h3><a href="http://app.fwd.us" target="_blank">FWD.us</a> <a href="https://app.fwd.us/api/v1/documentation">API</a> client demo page</h3>
+    <br />
+
+    <ul class="tabs" data-tabs id="example-tabs">
+      <li class="tabs-title is-active"><a href="#panel-articles">Articles</a></li>
+      <li class="tabs-title"><a href="#panel-stories">Stories</a></li>
+      <li class="tabs-title"><a href="#panel-companies" aria-selected="true">Companies</a></li>
+    </ul>
+
+    <div class="tabs-content" data-tabs-content="example-tabs">
+      <div class="tabs-panel is-active" id="panel-articles">
+        <h3>Press</h3>
+        <a href="#" class="button press-load-btn">Load Page</a>
+        <div class="press"></div>
+      </div>
+
+      <div class="tabs-panel" id="panel-stories">
+        <h3>Stories</h3>
+        <a href="#" class="button stories-load-btn">Load Page</a>
+        <div class="stories"></div>
+      </div>
+
+      <div class="tabs-panel" id="panel-companies">
+        <h3>Companies</h3>
+        <a href="#" class="button companies-load-btn">Load Page</a>
+
+        <table class="table-companies hide">
+          <thead>
+            <tr>
+              <th>Company</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
-    <ol class="companies"></ol>
   </div>
 </div>
 
-<div class="row">
-  <div class="small-12 columns">
-    <div>
-      <h3>Stories:</h3>
-      <a href="#" class="button stories-load-btn">Load All</a>
-    </div>
-    <ol class="stories"></ol>
-  </div>
-</div>
-
-<div class="row">
-  <div class="small-12 columns">
-    <div>
-      <h3>Press:</h3>
-      <a href="#" class="button press-load-btn">Load A Page</a>
-    </div>
-    <ol class="press"></ol>
-  </div>
-</div>
+<script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/foundation/6.2.1/foundation.min.js"></script>
+<script src="../dist/fwd-api.full.js"></script>
 
 <script>
+  $.fn.toggleShorten = function(){
+    this.each(function(){
+      var $self = $(this);
+      var fullContent = $self.html();
+      var previewLength = 600;
+      if (fullContent.length < previewLength) { return ; }
+
+      var previewContent = $self.text().substr(0, previewLength);
+      var showPreview = false;
+
+      var onBtnClick = function(e){
+        e.preventDefault();
+
+        showPreview = !showPreview;
+        if (showPreview) {
+          $self.html(previewContent).append('... <a href="#">Expand &gt;&gt;</a>');
+        } else {
+          $self.html(fullContent).append(' <a href="#">&lt;&lt; Collapse</a>');
+        }
+        $self.find('a').click(onBtnClick);
+      };
+      $('<a></a>').click(onBtnClick).click();
+    });
+  };
+
+  var image_url = function(url) {
+    return url.startsWith('//') ? 'http:' + url : url;
+  };
+
+  var renderPress = function(articles) {
+    var html = $.map(articles, function(article) {
+      var itemHTML = '<div class="media-object">';
+      if (article.get('image_url')) {
+        itemHTML += '<div class="media-object-section">';
+        itemHTML += '<div class="thumbnail">';
+
+        itemHTML += '<a href= "'+ article.get('link') +'" target="_blank">';
+        itemHTML += '<img src= "'+ article.get('image_url') +'" />';
+        itemHTML += '</a>';
+        itemHTML += '</div>';
+        itemHTML += '</div>';
+      }
+
+      itemHTML += '<div class="media-object-section">';
+      itemHTML += '<h4>';
+      itemHTML += '<a href= "'+ article.get('link') +'" target="_blank">' + article.get('title') +'</a>';
+      itemHTML += ' <small>'+ article.get('source_name') +'</small></h4>';
+      itemHTML += '</h4>';
+      itemHTML += '<p>' + article.get('description') +'</p>';
+      itemHTML += '</div>';
+
+      itemHTML += '</div>';
+
+      return itemHTML;
+    }).join('<hr />');
+
+    $('.press').html(html)
+  };
+
+  var renderStories = function(stories) {
+    var $stories = $.map(stories, function(story) {
+      var $story = $('<div class="media-object story"></div>');
+
+      var itemHTML = '';
+      if (story.get('photo_large')) {
+        itemHTML += '<div class="media-object-section">';
+        itemHTML += '<div class="thumbnail">';
+        itemHTML += '<img src= "'+ image_url(story.get('photo_large')) +'" style="width: 200px;" />';
+        itemHTML += '</div>';
+        itemHTML += '</div>';
+      }
+
+      itemHTML += '<div class="media-object-section">';
+      itemHTML += '<h4 class="title"><a href="'+ story.get('url') +'" target="_blank">'+ story.get('author') +'</a> - '+ story.get('country') +'</h4>';
+      itemHTML += '<p class="story-text">' + story.get('text') +'</p>';
+      itemHTML += '</div>';
+
+      $story.html(itemHTML);
+      $story.find('.story-text').toggleShorten();
+
+      story.company().done(function(company) {
+        var $title = $story.find('.title');
+        var html = $title.html();
+        html += ' <small>'+ company.get('name') +'</small>';
+        $title.html(html);
+      });
+
+      return $story;
+    });
+
+    var $container = $('.stories').html('');
+    $.each($stories, function(ix, $story){
+      $container.append($story);
+      if (ix != $stories.length - 1) {
+        $container.append('<hr />');
+      }
+    });
+  };
+
+  var renderCompanies = function(companies) {
+    var $companies = $('.table-companies');
+
+    $companies.find('tbody').html($.map(companies, function(company){
+      var html = '<tr>';
+      html += '<td>';
+      html += '<a href="'+ company.get('domain') +'" target="_blank">'+ company.get('name') +'</a>';
+      html += '</td>';
+      html += '</tr>';
+      return html;
+    }).join(''));
+
+    $companies.removeClass('hide');
+  };
+
+
   FWD.init('___public_api_key___');
+  $(document).foundation();
 
   $(function(){
     $('.companies-load-btn').click(function(e){
       e.preventDefault();
-
-      FWD.Company.loadAll().then(function(companies){
-        $.each(companies, function(ix, company){
-          $('.companies').append('<li>'+ company.get('name') + "</li>");
-        });
-      })
+      FWD.Company.load().then(renderCompanies);
     });
 
     $('.stories-load-btn').click(function(e){
       e.preventDefault();
-      FWD.Story.searchAll().then(function(stories){
-        var $stories = $('.stories');
-        $.each(stories, function(ix, story){
-          var $li = $("<li></li>").appendTo($stories);
-          $li.html(story.get('author'));
-
-          story.company().done(function(company) {
-            var html = $li.html();
-            html = html + ' - ' + company.get('name') + ' #' + story.get('company_id');
-            $li.html(html);
-          });
-        });
-      });
+      FWD.Story.index().then(renderStories);
     });
 
     $('.press-load-btn').click(function(e){
       e.preventDefault();
-      FWD.Article.press({tags: 'daca'}).then(function(articles){
-        var $press = $('.press');
-
-        $.each(articles, function(ix, article){
-          var $li = $("<li></li>").appendTo($press);
-          var html = '<div>';
-          html += '<h4>'+ article.get('title') +'</h4>';
-          if (article.get('image_url')) {
-            html += '<img src="'+ article.get('image_url') +'" />';
-          }
-
-          html += '</div>';
-
-          $li.html(html);
-        });
-      });
+      FWD.Article.press().then(renderPress);
     });
   });
 </script>

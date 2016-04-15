@@ -4,3 +4,5 @@ class FWD
 
   @getDevKey: ->
     @devKey || throw 'FWD DevKey required.'
+
+  @allPagesPerPage: 100

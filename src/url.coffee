@@ -4,6 +4,7 @@ class FWD.URL
     companies:
       index: '/companies.json'
     stories:
+      index: '/stories.json'
       search: '/stories/search.json'
     articles:
       press: '/articles/press.json'

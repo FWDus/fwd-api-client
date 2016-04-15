@@ -12,8 +12,8 @@ module.exports = function(grunt) {
           'dist/fwd-api.full.js': [
             'src/fwd.coffee',
             'src/url.coffee',
-            'src/helpers.coffee',
             'src/model.coffee',
+            'src/factory.coffee',
             'src/*.coffee'
           ]
         }
