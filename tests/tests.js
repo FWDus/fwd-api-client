@@ -1,22 +1,16 @@
-QUnit.begin(function(){
-  FuncBackup = {
-    ajax: $.ajax,
-    getJSON: $.getJSON
-  };
-});
+var resolvedPromise = function() {
+  var args;
+  var slice = [].slice;
+  args = 1 <= arguments.length ? slice.call(arguments, 0) : [];
 
-QUnit.testStart(function(){
-  $.ajax = FuncBackup.ajax;
-  $.getJSON = FuncBackup.getJSON;
-});
-
-var stub = function(stubName, stubVal) {
-  StubStore || StubStore = {};
-  StubStore[stubName] = eval(stubName);
-  eval(stubName + '= ' + )
-
-
+  return $.Deferred(function(defer){
+    defer.resolve.apply(null, args);
+  }).promise();
 };
+
+QUnit.begin(function(){
+  Stubs.init(QUnit);
+});
 
 QUnit.module('FWD init', function(){
   QUnit.test( "FWD.init()", function( assert ) {
@@ -40,7 +34,6 @@ QUnit.module('FWD.URL', function(){
     assert.equal(FWD.URL.for('users#data'), 'https://app.fwd.us/api/v1/people/info');
   });
 });
-
 
 QUnit.module('FWD.Model', function(){
   QUnit.test( "FWD.Model#get() returns attribute set via constructor", function( assert ) {
@@ -108,14 +101,14 @@ QUnit.module('FWD.Factory', function(){
 
 QUnit.module('FWD.Api', function(){
   var stubGetJSON = function(assert, expectedUrl, expectedParams, expectedKey) {
-    $.getJSON = function(url, params) {
+    Stubs.stub($, 'getJSON', function(url, params) {
       assert.equal(url, expectedUrl);
 
       var expectedParamsWithKey = $.extend({key: expectedKey}, expectedParams);
       assert.deepEqual(params, expectedParamsWithKey, 'key appended');
 
-      return $.Deferred().resolve();
-    };
+      return resolvedPromise();
+    });
   };
 
   QUnit.test( "FWD.Api.get - returns jqXHR from $.getJSON with params extended by additional key param", function( assert ) {
@@ -127,17 +120,6 @@ QUnit.module('FWD.Api', function(){
     jqXHR.then(assert.async()); // checking if promise was returned
   });
 
-
-  var resolvedPromise = function() {
-    var args;
-    var slice = [].slice;
-    args = 1 <= arguments.length ? slice.call(arguments, 0) : [];
-
-    return $.Deferred(function(defer){
-      defer.resolve.apply(null, args);
-    }).promise();
-  };
-
   var stubApiGetSeq = function(options) {
     var assert = options.assert;
     var expectedUrl = options.url;
@@ -145,7 +127,7 @@ QUnit.module('FWD.Api', function(){
 
     var dataPages = $.map(options.pageData, function(pageData, ix){
       return {
-        books: pageData[ix],
+        books: pageData,
         page: ix + 1,
         total_pages: totalPages
       };
@@ -165,7 +147,7 @@ QUnit.module('FWD.Api', function(){
       return resolvedPromise(dataPages[params.page - 1]);
     };
 
-    return apiGetFunc;
+    Stubs.stub(FWD.Api, 'get', apiGetFunc);
   };
 
   QUnit.test( "FWD.Api.getAllPages - on success - makes a sequence of requests over all pages, returns aggregated data", function( assert ) {
@@ -183,20 +165,19 @@ QUnit.module('FWD.Api', function(){
     var expectedUrl = 'http://example.com/books';
     var expectedParams = {year: 2016, genre: 'Sci-fi'};
 
-    FWD.Api.get = stubApiGetSeq({
-        assert: assert,
-        url: expectedUrl,
-        params: expectedParams,
-        pageData: [
-          expectedBooks.slice(0, 3),
-          expectedBooks.slice(3, 6),
-          expectedBooks.slice(6, 8)
-        ]
+    stubApiGetSeq({
+      assert: assert,
+      url: expectedUrl,
+      params: expectedParams,
+      pageData: [
+        expectedBooks.slice(0, 3),
+        expectedBooks.slice(3, 6),
+        expectedBooks.slice(6, 8)
+      ]
     });
 
     var done = assert.async();
-    var promise = FWD.Api.getAllPages(expectedUrl, 'books', expectedParams);
-    promise.then(function(collection){
+    FWD.Api.getAllPages(expectedUrl, 'books', expectedParams).then(function(collection){
       assert.deepEqual(collection, expectedBooks, 'Collections aggregated properly');
       done();
     });
