@@ -12,7 +12,24 @@
 <script src="https://code.jquery.com/qunit/qunit-1.23.0.js"></script>
 <script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
 <script src="../dist/fwd-api.full.min.js"></script>
-<script src="stubs.js"></script>
-<script src="tests.js"></script>
+
+<script src="lib/stubs.js"></script>
+<script src="lib/helpers.js"></script>
+
+<script src="unit/api.js"></script>
+<script src="unit/article.js"></script>
+<script src="unit/company.js"></script>
+<script src="unit/factory.js"></script>
+<script src="unit/fwd.js"></script>
+<script src="unit/model.js"></script>
+<script src="unit/story.js"></script>
+<script src="unit/url.js"></script>
+
+<script>
+  QUnit.begin(function(){
+    Stubs.init(QUnit);
+  });
+</script>
+
 </body>
 </html>
