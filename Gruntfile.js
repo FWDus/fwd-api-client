@@ -15,7 +15,8 @@ module.exports = function(grunt) {
             'src/model.coffee',
             'src/factory.coffee',
             'src/*.coffee'
-          ]
+          ],
+          'tests/unit_tests.js': ['tests/unit/*.coffee']
         }
       }
     },
@@ -29,6 +30,7 @@ module.exports = function(grunt) {
     watch: {
       scripts: {
         files: ['src/*.coffee'],
+        files: ['tests/unit/*.coffee'],
         tasks: ['default']
       },
       configFiles: {
