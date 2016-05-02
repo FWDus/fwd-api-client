@@ -1,13 +1,6 @@
-TestHelpers = {
-  resolvedPromise: function() {
-    var args;
-    var slice = [].slice;
-    args = 1 <= arguments.length ? slice.call(arguments, 0) : [];
-
-    return $.Deferred(function(defer){
-      defer.resolve.apply(null, args);
-    }).promise();
-  },
+TestHelpers =
+  resolvedPromise: (args...)->
+    $.Deferred((defer)-> defer.resolve(args...)).promise()
 
   testGetModelCollectionPage: function(options, assert) {
     var func = options.func;
@@ -18,13 +11,8 @@ TestHelpers = {
 
     var payload = {};
     payload[collectionField] = [
-      {
-        id: 123,
-        randomAttr: 'Story text'
-      }, {
-        id: 321,
-        anotherAttr: 'Another story text'
-      }
+      {id: 123, randomAttr: 'Attribute value'},
+      {id: 321, anotherAttr: 'Another attribute value'}
     ];
 
     var apiGetStub = function(url, params){
@@ -53,9 +41,9 @@ TestHelpers = {
       assert.ok(modelCollection[1] instanceof modelClass);
 
       assert.equal(modelCollection[0].get('id'), 123);
-      assert.equal(modelCollection[0].get('randomAttr'), 'Story text');
+      assert.equal(modelCollection[0].get('randomAttr'), 'Attribute value');
       assert.equal(modelCollection[1].get('id'), 321);
-      assert.equal(modelCollection[1].get('anotherAttr'), 'Another story text');
+      assert.equal(modelCollection[1].get('anotherAttr'), 'Another attribute value');
 
       done();
     });
@@ -69,13 +57,8 @@ TestHelpers = {
 
     var payload = {};
     payload[collectionField] = [
-      {
-        id: 123,
-        randomAttr: 'Story text'
-      }, {
-        id: 321,
-        anotherAttr: 'Another story text'
-      }
+      {id: 123, randomAttr: 'Attribute value'},
+      {id: 321, anotherAttr: 'Another attribute value'}
     ];
 
     var apiGetAllPagesStub = function(url, params){
@@ -104,9 +87,9 @@ TestHelpers = {
       assert.ok(modelCollection[1] instanceof modelClass);
 
       assert.equal(modelCollection[0].get('id'), 123);
-      assert.equal(modelCollection[0].get('randomAttr'), 'Story text');
+      assert.equal(modelCollection[0].get('randomAttr'), 'Attribute value');
       assert.equal(modelCollection[1].get('id'), 321);
-      assert.equal(modelCollection[1].get('anotherAttr'), 'Another story text');
+      assert.equal(modelCollection[1].get('anotherAttr'), 'Another attribute value');
 
       done();
     });

@@ -16,7 +16,8 @@ module.exports = function(grunt) {
             'src/factory.coffee',
             'src/*.coffee'
           ],
-          'tests/unit_tests.js': ['tests/unit/*.coffee']
+          'tests/unit_tests.js': ['tests/unit/*.coffee'],
+          'tests/test_helpers.js': 'tests/lib/*.coffee'
         }
       }
     },

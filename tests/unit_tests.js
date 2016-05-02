@@ -107,9 +107,35 @@ QUnit.module('FWD.Api', function() {
   });
 });
 
+QUnit.module('FWD.Article', function() {
+  return QUnit.test('FWD.Article.press()', function(assert) {
+    return TestHelpers.testGetModelCollectionPage({
+      func: FWD.Article.press,
+      collectionField: 'articles',
+      url: 'https://app.fwd.us/api/v1/articles/press.json',
+      modelClass: FWD.Article
+    }, assert);
+  });
+});
 
-
-
+QUnit.module('FWD.Company', function() {
+  QUnit.test('FWD.Company.loadAll()', function(assert) {
+    return TestHelpers.testGetModelCollectionAllPages({
+      func: FWD.Company.loadAll,
+      collectionField: 'companies',
+      url: 'https://app.fwd.us/api/v1/companies.json',
+      modelClass: FWD.Company
+    }, assert);
+  });
+  return QUnit.test('FWD.Company.load()', function(assert) {
+    return TestHelpers.testGetModelCollectionPage({
+      func: FWD.Company.load,
+      collectionField: 'companies',
+      url: 'https://app.fwd.us/api/v1/companies.json',
+      modelClass: FWD.Company
+    }, assert);
+  });
+});
 
 var extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
   hasProp = {}.hasOwnProperty;
