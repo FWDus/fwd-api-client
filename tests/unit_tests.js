@@ -40,7 +40,7 @@ QUnit.module('FWD.Api', function() {
     };
     return Stubs.stub(FWD.Api, 'get', apiGetFunc);
   };
-  QUnit.test("FWD.Api.get - returns jqXHR from $.getJSON with params extended by additional key param", function(assert) {
+  QUnit.test("FWD.Api.get() - returns jqXHR from $.getJSON with params extended by additional key param", function(assert) {
     var jqXHR, params;
     params = {
       name: 'User Userson',
@@ -59,7 +59,7 @@ QUnit.module('FWD.Api', function() {
     });
     return jqXHR.then(assert.async());
   });
-  return QUnit.test("FWD.Api.getAllPages - on success - makes a sequence of requests over all pages, returns aggregated data", function(assert) {
+  return QUnit.test("FWD.Api.getAllPages() - on success - makes a sequence of requests over all pages, returns aggregated data", function(assert) {
     var done, expectedBooks, expectedParams, expectedUrl;
     expectedUrl = 'http://example.com/books';
     expectedParams = {
@@ -127,13 +127,33 @@ QUnit.module('FWD.Company', function() {
       modelClass: FWD.Company
     }, assert);
   });
-  return QUnit.test('FWD.Company.load()', function(assert) {
+  QUnit.test('FWD.Company.load()', function(assert) {
     return TestHelpers.testGetModelCollectionPage({
       func: FWD.Company.load,
       collectionField: 'companies',
       url: 'https://app.fwd.us/api/v1/companies.json',
       modelClass: FWD.Company
     }, assert);
+  });
+  return QUnit.test('FWD.Company.find()', function(assert) {
+    var companies, done;
+    companies = [
+      new FWD.Company({
+        id: '111'
+      }), new FWD.Company({
+        id: '222'
+      }), new FWD.Company({
+        id: '333'
+      })
+    ];
+    Stubs.stub(FWD.Company, 'loadAll', function() {
+      return TestHelpers.resolvedPromise(companies);
+    });
+    done = assert.async();
+    return FWD.Company.find('222').then(function(company) {
+      assert.equal(company, companies[1]);
+      return done();
+    });
   });
 });
 
@@ -152,7 +172,7 @@ QUnit.module('FWD.Factory', function() {
     return SubModel;
 
   })(FWD.Model);
-  QUnit.test("FWD.Factory.loadPageFunc", function(assert) {
+  QUnit.test("FWD.Factory.loadPageFunc()", function(assert) {
     var done, expectedParams, expectedUrl, func, pageData;
     expectedUrl = 'http://example.com/collection';
     expectedParams = {
@@ -193,7 +213,7 @@ QUnit.module('FWD.Factory', function() {
       return done();
     });
   });
-  QUnit.test("FWD.Factory.loadAllFunc", function(assert) {
+  QUnit.test("FWD.Factory.loadAllFunc()", function(assert) {
     var aggregatedAttrs, done, expectedParams, expectedUrl, func;
     expectedUrl = 'http://example.com/collection';
     expectedParams = {
@@ -233,7 +253,7 @@ QUnit.module('FWD.Factory', function() {
       return done();
     });
   });
-  QUnit.test("FWD.Factory.convertArrayParams", function(assert) {
+  QUnit.test("FWD.Factory.convertArrayParams()", function(assert) {
     var params;
     params = {
       name: 'User Userson',
@@ -244,11 +264,11 @@ QUnit.module('FWD.Factory', function() {
       tags: 'one,two,three and four'
     });
   });
-  QUnit.test("FWD.Factory.arrayParam", function(assert) {
+  QUnit.test("FWD.Factory.arrayParam()", function(assert) {
     assert.equal(FWD.Factory.arrayParam('Some string'), 'Some string');
     return assert.equal(FWD.Factory.arrayParam(['list', 'of', 'different tags']), 'list,of,different tags');
   });
-  return QUnit.test("FWD.Factory.attributesToModels", function(assert) {
+  return QUnit.test("FWD.Factory.attributesToModels()", function(assert) {
     var attrList, models;
     attrList = [
       {
@@ -295,7 +315,7 @@ QUnit.module('FWD.Model', function() {
 });
 
 QUnit.module('FWD.Story', function() {
-  QUnit.test("FWD.Story.index", function(assert) {
+  QUnit.test("FWD.Story.index()", function(assert) {
     return TestHelpers.testGetModelCollectionPage({
       func: FWD.Story.index,
       collectionField: 'stories',
@@ -303,7 +323,7 @@ QUnit.module('FWD.Story', function() {
       modelClass: FWD.Story
     }, assert);
   });
-  QUnit.test("FWD.Story.search", function(assert) {
+  QUnit.test("FWD.Story.search()", function(assert) {
     return TestHelpers.testGetModelCollectionPage({
       func: FWD.Story.search,
       collectionField: 'stories',
@@ -312,7 +332,7 @@ QUnit.module('FWD.Story', function() {
       arrayParams: ['company', 'tags']
     }, assert);
   });
-  QUnit.test("FWD.Story.searchAll", function(assert) {
+  QUnit.test("FWD.Story.searchAll()", function(assert) {
     return TestHelpers.testGetModelCollectionAllPages({
       func: FWD.Story.search,
       collectionField: 'stories',

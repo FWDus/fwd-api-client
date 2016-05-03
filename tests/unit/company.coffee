@@ -18,5 +18,16 @@ QUnit.module 'FWD.Company', ->
     }, assert)
 
 
-#  QUnit.test 'FWD.Company.find()', (assert)->
+  QUnit.test 'FWD.Company.find()', (assert)->
+    companies = [
+      new FWD.Company({id: '111'}),
+      new FWD.Company({id: '222'}),
+      new FWD.Company({id: '333'})
+    ]
 
+    Stubs.stub(FWD.Company, 'loadAll', -> TestHelpers.resolvedPromise(companies))
+    done = assert.async()
+
+    FWD.Company.find('222').then (company)->
+      assert.equal(company, companies[1])
+      done()

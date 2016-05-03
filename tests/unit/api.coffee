@@ -37,7 +37,7 @@ QUnit.module 'FWD.Api', ->
     Stubs.stub(FWD.Api, 'get', apiGetFunc)
 
 
-  QUnit.test "FWD.Api.get - returns jqXHR from $.getJSON with params extended by additional key param", (assert)->
+  QUnit.test "FWD.Api.get() - returns jqXHR from $.getJSON with params extended by additional key param", (assert)->
     params = name: 'User Userson', phone: '555-555-5555'
 
     stubGetJSON(
@@ -52,7 +52,7 @@ QUnit.module 'FWD.Api', ->
     jqXHR.then assert.async() # checking if promise was returned
 
 
-  QUnit.test "FWD.Api.getAllPages - on success - makes a sequence of requests over all pages, returns aggregated data", (assert)->
+  QUnit.test "FWD.Api.getAllPages() - on success - makes a sequence of requests over all pages, returns aggregated data", (assert)->
     expectedUrl = 'http://example.com/books'
     expectedParams = year: 2016, genre: 'Sci-fi'
     expectedBooks = [

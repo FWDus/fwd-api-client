@@ -1,7 +1,7 @@
 QUnit.module 'FWD.Factory', ->
   class SubModel extends FWD.Model
 
-  QUnit.test "FWD.Factory.loadPageFunc", (assert)->
+  QUnit.test "FWD.Factory.loadPageFunc()", (assert)->
     expectedUrl = 'http://example.com/collection'
     expectedParams = param1: 'some value', tags: ['developer', 'web']
 
@@ -32,7 +32,7 @@ QUnit.module 'FWD.Factory', ->
 
       done()
 
-  QUnit.test "FWD.Factory.loadAllFunc", (assert)->
+  QUnit.test "FWD.Factory.loadAllFunc()", (assert)->
     expectedUrl = 'http://example.com/collection'
     expectedParams = param1: 'some value', tags: ['developer', 'web']
 
@@ -64,7 +64,7 @@ QUnit.module 'FWD.Factory', ->
 
       done()
 
-  QUnit.test "FWD.Factory.convertArrayParams", (assert)->
+  QUnit.test "FWD.Factory.convertArrayParams()", (assert)->
     params =
       name: 'User Userson',
       tags: ['one', 'two', 'three and four']
@@ -75,12 +75,12 @@ QUnit.module 'FWD.Factory', ->
     }
 
 
-  QUnit.test "FWD.Factory.arrayParam", (assert)->
+  QUnit.test "FWD.Factory.arrayParam()", (assert)->
     assert.equal(FWD.Factory.arrayParam('Some string'), 'Some string')
     assert.equal(FWD.Factory.arrayParam(['list', 'of', 'different tags']), 'list,of,different tags')
 
 
-  QUnit.test "FWD.Factory.attributesToModels", (assert)->
+  QUnit.test "FWD.Factory.attributesToModels()", (assert)->
     attrList = [
       {first_name: 'Homer', last_name: 'Simpson'},
       {first_name: 'User', last_name: 'Userson'}

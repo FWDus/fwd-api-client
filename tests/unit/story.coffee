@@ -1,5 +1,5 @@
 QUnit.module 'FWD.Story', ->
-  QUnit.test "FWD.Story.index", (assert)->
+  QUnit.test "FWD.Story.index()", (assert)->
     TestHelpers.testGetModelCollectionPage({
       func: FWD.Story.index
       collectionField: 'stories'
@@ -8,7 +8,7 @@ QUnit.module 'FWD.Story', ->
     }, assert)
 
 
-  QUnit.test "FWD.Story.search", (assert)->
+  QUnit.test "FWD.Story.search()", (assert)->
     TestHelpers.testGetModelCollectionPage({
       func: FWD.Story.search
       collectionField: 'stories'
@@ -18,7 +18,7 @@ QUnit.module 'FWD.Story', ->
     }, assert)
 
 
-  QUnit.test "FWD.Story.searchAll", (assert)->
+  QUnit.test "FWD.Story.searchAll()", (assert)->
     TestHelpers.testGetModelCollectionAllPages({
       func: FWD.Story.search
       collectionField: 'stories'
