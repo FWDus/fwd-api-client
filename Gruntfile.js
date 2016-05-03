@@ -30,8 +30,11 @@ module.exports = function(grunt) {
     },
     watch: {
       scripts: {
-        files: ['src/*.coffee'],
-        files: ['tests/unit/*.coffee'],
+        files: [
+          'src/*.coffee',
+          'tests/unit/*.coffee',
+          'tests/lib/*.coffee'
+        ],
         tasks: ['default']
       },
       configFiles: {

@@ -93,11 +93,10 @@ TestHelpers = {
     });
   },
   testGetModelCollectionAllPages: function(options, assert) {
-    var apiGetAllPagesStub, arrayParams, collectionField, done, expectedURL, func, modelClass, params, payload, ref, url;
+    var apiGetAllPagesStub, arrayParams, attrCollection, collectionField, done, expectedURL, func, modelClass, params, ref, url;
     func = options.func, modelClass = options.modelClass, url = options.url, collectionField = options.collectionField, arrayParams = (ref = options.arrayParams) != null ? ref : [];
     expectedURL = url;
-    payload = {};
-    payload[collectionField] = [
+    attrCollection = [
       {
         id: 123,
         randomAttr: 'Attribute value'
@@ -106,14 +105,15 @@ TestHelpers = {
         anotherAttr: 'Another attribute value'
       }
     ];
-    apiGetAllPagesStub = function(url, params) {
+    apiGetAllPagesStub = function(url, collectionName, params) {
+      assert.equal(collectionName, collectionField);
       assert.equal(params.param1, 'Param1 value');
       assert.equal(params.param2, 'Another value');
       assert.equal(url, expectedURL);
       $.each(arrayParams, function(ix, arrayParam) {
         return assert.equal(params[arrayParam], 'elem1,elem2,elem3');
       });
-      return TestHelpers.resolvedPromise(payload);
+      return TestHelpers.resolvedPromise(attrCollection);
     };
     Stubs.stub(FWD.Api, 'getAllPages', apiGetAllPagesStub);
     done = assert.async();
@@ -125,6 +125,7 @@ TestHelpers = {
       return params[arrayParam] = ['elem1', 'elem2', 'elem3'];
     });
     return func(params).then(function(modelCollection) {
+      console.log(arguments);
       assert.ok(modelCollection[0] instanceof modelClass);
       assert.ok(modelCollection[1] instanceof modelClass);
       assert.equal(modelCollection[0].get('id'), 123);
