@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FWD.us API client demo</title>
   <link rel="stylesheet" href="http://cdn.jsdelivr.net/foundation/6.2.1/foundation.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
 </head>
 <body>
 
@@ -55,6 +56,54 @@
 <script src="https://cdn.jsdelivr.net/foundation/6.2.1/foundation.min.js"></script>
 <script src="../dist/fwd-api.full.js"></script>
 
+<script type="text/x-handlebars-template" id="pressTemplate">
+  <div class="media-object">
+    {{#if image_url}}
+      <div class="media-object-section">
+        <div class="thumbnail">
+          <a href= "{{ link }}" target="_blank">
+            <img src= "{{ image_url }}" />
+          </a>
+        </div>
+      </div>
+    {{/if}}
+
+    <div class="media-object-section">
+      <h4>
+        <a href= "{{ link }}" target="_blank">{{ title }}</a>
+        <small>{{ source_name }}</small>
+      </h4>
+      <p>{{ description }}</p>
+    </div>
+  </div>
+</script>
+
+
+<script type="text/x-handlebars-template" id="storyTemplate">
+  {{#if photo_large}}
+    <div class="media-object-section">
+      <div class="thumbnail">
+        <img src="{{ photo_large_url }}" style="width: 200px;" />
+      </div>
+    </div>
+  {{/if}}
+
+  <div class="media-object-section">
+    <h4 class="title">
+      <a href="{{ url }}" target="_blank">{{ author }}</a>{{#if country}} - {{ country }}{{/if}}
+    </h4>
+    <p class="story-text">{{ text }}</p>
+  </div>
+</script>
+
+<script type="text/x-handlebars-template" id="companyTemplate">
+  <tr>
+    <td>
+      <a href="{{ domain }}" target="_blank">{{ name }}</a>
+    </td>
+  </tr>
+</script>
+
 <script>
   $.fn.toggleShorten = function(){
     this.each(function(){
@@ -86,55 +135,29 @@
   };
 
   var renderPress = function(articles) {
+    var source = $('#pressTemplate').html();
+    var template = Handlebars.compile(source);
+
     var html = $.map(articles, function(article) {
-      var itemHTML = '<div class="media-object">';
-      if (article.get('image_url')) {
-        itemHTML += '<div class="media-object-section">';
-        itemHTML += '<div class="thumbnail">';
-
-        itemHTML += '<a href= "'+ article.get('link') +'" target="_blank">';
-        itemHTML += '<img src= "'+ article.get('image_url') +'" />';
-        itemHTML += '</a>';
-        itemHTML += '</div>';
-        itemHTML += '</div>';
-      }
-
-      itemHTML += '<div class="media-object-section">';
-      itemHTML += '<h4>';
-      itemHTML += '<a href= "'+ article.get('link') +'" target="_blank">' + article.get('title') +'</a>';
-      itemHTML += ' <small>'+ article.get('source_name') +'</small></h4>';
-      itemHTML += '</h4>';
-      itemHTML += '<p>' + article.get('description') +'</p>';
-      itemHTML += '</div>';
-
-      itemHTML += '</div>';
-
-      return itemHTML;
+      return template(article.attributes);
     }).join('<hr />');
 
     $('.press').html(html)
   };
 
   var renderStories = function(stories) {
+    var source = $('#storyTemplate').html();
+    var template = Handlebars.compile(source);
+
     var $stories = $.map(stories, function(story) {
+      var decoratedAttributes = $.extend(
+          {photo_large_url: image_url(story.attributes.photo_large)},
+          story.attributes
+      );
+      var storyHTML = template(decoratedAttributes);
       var $story = $('<div class="media-object story"></div>');
 
-      var itemHTML = '';
-      if (story.get('photo_large')) {
-        itemHTML += '<div class="media-object-section">';
-        itemHTML += '<div class="thumbnail">';
-        itemHTML += '<img src= "'+ image_url(story.get('photo_large')) +'" style="width: 200px;" />';
-        itemHTML += '</div>';
-        itemHTML += '</div>';
-      }
-
-      itemHTML += '<div class="media-object-section">';
-      itemHTML += '<h4 class="title"><a href="'+ story.get('url') +'" target="_blank">'+ story.get('author') +'</a> - '+ story.get('country') +'</h4>';
-      itemHTML += '<p class="story-text">' + story.get('text') +'</p>';
-      itemHTML += '</div>';
-
-      $story.html(itemHTML);
-      $story.find('.story-text').toggleShorten();
+      $story.html(storyHTML).find('.story-text').toggleShorten();
 
       story.company().done(function(company) {
         var $title = $story.find('.title');
@@ -156,20 +179,18 @@
   };
 
   var renderCompanies = function(companies) {
+    var source = $('#companyTemplate').html();
+    var template = Handlebars.compile(source);
     var $companies = $('.table-companies');
 
-    $companies.find('tbody').html($.map(companies, function(company){
-      var html = '<tr>';
-      html += '<td>';
-      html += '<a href="'+ company.get('domain') +'" target="_blank">'+ company.get('name') +'</a>';
-      html += '</td>';
-      html += '</tr>';
-      return html;
-    }).join(''));
+    $companies.find('tbody').html(
+      $.map(companies, function(company){
+        return template(company.attributes)}
+      ).join('')
+    );
 
     $companies.removeClass('hide');
   };
-
 
   FWD.init('___public_api_key___');
   $(document).foundation();
