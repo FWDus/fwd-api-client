@@ -9,7 +9,7 @@ class FWD.Factory
 
         FWD.Api.get(url, params).fail(defer.reject).done (data) =>
           models = @attributesToModels(data[collectionName], model)
-          defer.resolve(models)
+          defer.resolve(models, data)
       ).promise()
 
   @loadAllFunc: (options)=>

@@ -86,7 +86,7 @@ FWD.Factory = (function() {
         return FWD.Api.get(url, params).fail(defer.reject).done(function(data) {
           var models;
           models = Factory.attributesToModels(data[collectionName], model);
-          return defer.resolve(models);
+          return defer.resolve(models, data);
         });
       }).promise();
     };
