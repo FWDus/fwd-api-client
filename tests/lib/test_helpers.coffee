@@ -2,6 +2,27 @@ TestHelpers =
   resolvedPromise: (args...)->
     $.Deferred((defer)-> defer.resolve(args...)).promise()
 
+  testGetResource: (options, assert)->
+    {func, modelClass, url, jsonField} = options
+    expectedURL = url
+
+    payload = {"#{jsonField}": {id: 123, randomAttr: 'Attribute value', anotherAttr: 'Another attribute value'}}
+    apiGetStub = (url, {})->
+      assert.equal(url, expectedURL(123))
+      TestHelpers.resolvedPromise(payload)
+
+    Stubs.stub(FWD.Api, 'get', apiGetStub)
+
+    done = assert.async()
+    func(123).then (model)->
+      assert.ok(model instanceof modelClass)
+
+      assert.equal(model.get('id'), 123)
+      assert.equal(model.get('randomAttr'), 'Attribute value')
+      assert.equal(model.get('anotherAttr'), 'Another attribute value')
+
+      done()
+
   testGetModelCollectionPage: (options, assert)->
     {func, modelClass, url, collectionField, arrayParams = []} = options
     expectedURL = url
@@ -70,8 +91,6 @@ TestHelpers =
       params[arrayParam] = ['elem1', 'elem2', 'elem3']
 
     func(params).then (modelCollection)->
-      console.log(arguments)
-
       assert.ok(modelCollection[0] instanceof modelClass)
       assert.ok(modelCollection[1] instanceof modelClass)
 

@@ -19,6 +19,8 @@ FWD = (function() {
 
 })();
 
+var slice = [].slice;
+
 FWD.URL = (function() {
   function URL() {}
 
@@ -30,6 +32,9 @@ FWD.URL = (function() {
     },
     stories: {
       index: '/stories.json',
+      show: function(id) {
+        return "/stories/" + id + ".json";
+      },
       search: '/stories/search.json'
     },
     articles: {
@@ -41,7 +46,17 @@ FWD.URL = (function() {
     var action, model, path, ref;
     ref = route.split('#'), model = ref[0], action = ref[1];
     path = this.urls[model][action];
-    return this.host.concat(path);
+    if ($.isFunction(path)) {
+      return (function(_this) {
+        return function() {
+          var args;
+          args = 1 <= arguments.length ? slice.call(arguments, 0) : [];
+          return _this.host.concat(path.apply(null, args));
+        };
+      })(this);
+    } else {
+      return this.host.concat(path);
+    }
   };
 
   return URL;
@@ -72,8 +87,29 @@ FWD.Model = (function() {
 
 })();
 
+var slice = [].slice;
+
 FWD.Factory = (function() {
   function Factory() {}
+
+  Factory.loadResourceFunc = function(options) {
+    var jsonField, model, url;
+    url = options.url, model = options.model, jsonField = options.jsonField;
+    return function() {
+      var args;
+      args = 1 <= arguments.length ? slice.call(arguments, 0) : [];
+      return $.Deferred(function(defer) {
+        if ($.isFunction(url)) {
+          url = url(args[0]);
+        }
+        return FWD.Api.get(url, {}).fail(defer.reject).done(function(data) {
+          var instance;
+          instance = new model(data[jsonField]);
+          return defer.resolve(instance, data);
+        });
+      }).promise();
+    };
+  };
 
   Factory.loadPageFunc = function(options) {
     var arrayParams, collectionName, model, url;
@@ -257,6 +293,12 @@ FWD.Story = (function(superClass) {
   Story.index = FWD.Factory.loadPageFunc({
     url: FWD.URL["for"]('stories#index'),
     collectionName: 'stories',
+    model: Story
+  });
+
+  Story.show = FWD.Factory.loadResourceFunc({
+    url: FWD.URL["for"]('stories#show'),
+    jsonField: 'story',
     model: Story
   });
 

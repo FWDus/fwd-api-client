@@ -5,6 +5,7 @@ class FWD.URL
       index: '/companies.json'
     stories:
       index: '/stories.json'
+      show: (id)-> "/stories/#{id}.json"
       search: '/stories/search.json'
     articles:
       press: '/articles/press.json'
@@ -12,4 +13,7 @@ class FWD.URL
   @for: (route)->
     [model, action] = route.split('#')
     path = @urls[model][action]
-    @host.concat(path)
+    if $.isFunction(path)
+      (args...)=> @host.concat(path(args...))
+    else
+      @host.concat(path)

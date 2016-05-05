@@ -1,4 +1,16 @@
 class FWD.Factory
+  @loadResourceFunc: (options)=>
+    {url, model, jsonField} = options
+
+    (args...)=>
+      $.Deferred((defer)=>
+        url = url(args[0]) if $.isFunction(url)
+
+        FWD.Api.get(url, {}).fail(defer.reject).done (data) =>
+          instance = new model(data[jsonField])
+          defer.resolve(instance, data)
+      ).promise()
+
   @loadPageFunc: (options)=>
     {url, model, collectionName, arrayParams} = options
     arrayParams ||= []

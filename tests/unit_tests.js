@@ -323,6 +323,16 @@ QUnit.module('FWD.Story', function() {
       modelClass: FWD.Story
     }, assert);
   });
+  QUnit.test("FWD.Story.show()", function(assert) {
+    return TestHelpers.testGetResource({
+      func: FWD.Story.show,
+      jsonField: 'story',
+      url: function(id) {
+        return "https://app.fwd.us/api/v1/stories/" + id + ".json";
+      },
+      modelClass: FWD.Story
+    }, assert);
+  });
   QUnit.test("FWD.Story.search()", function(assert) {
     return TestHelpers.testGetModelCollectionPage({
       func: FWD.Story.search,
@@ -380,8 +390,12 @@ QUnit.module('FWD.URL', function() {
   });
   return QUnit.test("FWD.URL.for()", function(assert) {
     FWD.URL.urls['users'] = {
+      show: function(id) {
+        return "/people/" + id;
+      },
       data: '/people/info'
     };
-    return assert.equal(FWD.URL["for"]('users#data'), 'https://app.fwd.us/api/v1/people/info');
+    assert.equal(FWD.URL["for"]('users#data'), 'https://app.fwd.us/api/v1/people/info', 'Static path');
+    return assert.equal(FWD.URL["for"]('users#show')(321), 'https://app.fwd.us/api/v1/people/321', 'Dynamic path');
   });
 });

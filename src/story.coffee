@@ -5,6 +5,12 @@ class FWD.Story extends FWD.Model
     model: this
   )
 
+  @show: FWD.Factory.loadResourceFunc(
+    url: FWD.URL.for('stories#show'),
+    jsonField: 'story',
+    model: this
+  )
+
   @search: FWD.Factory.loadPageFunc(
     url: FWD.URL.for('stories#search'),
     collectionName: 'stories',

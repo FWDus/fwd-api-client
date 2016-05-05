@@ -8,6 +8,15 @@ QUnit.module 'FWD.Story', ->
     }, assert)
 
 
+  QUnit.test "FWD.Story.show()", (assert)->
+    TestHelpers.testGetResource({
+      func: FWD.Story.show
+      jsonField: 'story'
+      url: (id)-> "https://app.fwd.us/api/v1/stories/#{id}.json"
+      modelClass: FWD.Story
+    }, assert)
+
+
   QUnit.test "FWD.Story.search()", (assert)->
     TestHelpers.testGetModelCollectionPage({
       func: FWD.Story.search
