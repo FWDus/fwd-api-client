@@ -298,6 +298,56 @@ QUnit.module('FWD init', function() {
   });
 });
 
+QUnit.module('FWD.Legislator', function() {
+  QUnit.test("FWD.Legislator.index()", function(assert) {
+    return TestHelpers.testGetModelCollectionPage({
+      func: FWD.Legislator.index,
+      collectionField: 'legislators',
+      url: 'https://app.fwd.us/api/v1/legislators.json',
+      modelClass: FWD.Legislator
+    }, assert);
+  });
+  QUnit.test("FWD.Legislator.search()", function(assert) {
+    return TestHelpers.testGetModelCollectionPage({
+      func: FWD.Legislator.search,
+      collectionField: 'legislators',
+      url: 'https://app.fwd.us/api/v1/legislators/search.json',
+      modelClass: FWD.Legislator
+    }, assert);
+  });
+  return QUnit.test("FWD.Legislator.show()", function(assert) {
+    return TestHelpers.testGetResource({
+      func: FWD.Legislator.show,
+      jsonField: 'legislator',
+      url: function(bioguide_id) {
+        return "https://app.fwd.us/api/v1/legislators/" + bioguide_id + ".json";
+      },
+      modelClass: FWD.Legislator
+    }, assert);
+  });
+});
+
+QUnit.module('FWD.Letter', function() {
+  QUnit.test('FWD.Letter.index()', function(assert) {
+    return TestHelpers.testGetModelCollectionPage({
+      func: FWD.Letter.index,
+      collectionField: 'letters',
+      url: 'https://app.fwd.us/api/v1/letters.json',
+      modelClass: FWD.Letter
+    }, assert);
+  });
+  return QUnit.test('FWD.Letter.show()', function(assert) {
+    return TestHelpers.testGetResource({
+      func: FWD.Letter.show,
+      jsonField: 'letter',
+      url: function(letter_id) {
+        return "https://app.fwd.us/api/v1/letters/" + letter_id + ".json";
+      },
+      modelClass: FWD.Letter
+    }, assert);
+  });
+});
+
 QUnit.module('FWD.Model', function() {
   QUnit.test("FWD.Model#get() returns attribute set via constructor", function(assert) {
     var model;
@@ -311,6 +361,43 @@ QUnit.module('FWD.Model', function() {
     model = new FWD.Model();
     model.set('last_name', 'Userson');
     return assert.equal(model.get('last_name'), 'Userson');
+  });
+});
+
+QUnit.module('FWD.Selfie', function() {
+  QUnit.test('FWD.Selfie.index()', function(assert) {
+    return TestHelpers.testGetModelCollectionPage({
+      func: FWD.Selfie.index,
+      collectionField: 'selfies',
+      url: 'https://app.fwd.us/api/v1/selfies.json',
+      modelClass: FWD.Selfie
+    }, assert);
+  });
+  QUnit.test('FWD.Selfie.show()', function(assert) {
+    return TestHelpers.testGetResource({
+      func: FWD.Selfie.show,
+      jsonField: 'selfie',
+      url: function(selfie_id) {
+        return "https://app.fwd.us/api/v1/selfies/" + selfie_id + ".json";
+      },
+      modelClass: FWD.Selfie
+    }, assert);
+  });
+  QUnit.test('FWD.Selfie.gallery()', function(assert) {
+    return TestHelpers.testGetModelCollectionPage({
+      func: FWD.Selfie.gallery,
+      collectionField: 'selfies',
+      url: 'https://app.fwd.us/api/v1/selfies/gallery.json',
+      modelClass: FWD.Selfie
+    }, assert);
+  });
+  return QUnit.test('FWD.Selfie.celebrities()', function(assert) {
+    return TestHelpers.testGetModelCollectionPage({
+      func: FWD.Selfie.celebrities,
+      collectionField: 'selfies',
+      url: 'https://app.fwd.us/api/v1/selfies/celebrities.json',
+      modelClass: FWD.Selfie
+    }, assert);
   });
 });
 
@@ -395,7 +482,7 @@ QUnit.module('FWD.URL', function() {
       },
       data: '/people/info'
     };
-    assert.equal(FWD.URL["for"]('users#data'), 'https://app.fwd.us/api/v1/people/info', 'Static path');
-    return assert.equal(FWD.URL["for"]('users#show')(321), 'https://app.fwd.us/api/v1/people/321', 'Dynamic path');
+    assert.equal(FWD.URL["for"]('users#data'), 'https://app.fwd.us/api/v1/people/info.json', 'Static path');
+    return assert.equal(FWD.URL["for"]('users#show')(321), 'https://app.fwd.us/api/v1/people/321.json', 'Dynamic path');
   });
 });

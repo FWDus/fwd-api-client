@@ -27,18 +27,39 @@ FWD.URL = (function() {
   URL.host = 'https://app.fwd.us/api/v1';
 
   URL.urls = {
+    legislators: {
+      index: '/legislators',
+      search: '/legislators/search',
+      show: function(bioguide_id) {
+        return "/legislators/" + bioguide_id;
+      }
+    },
+    letters: {
+      index: '/letters',
+      show: function(id) {
+        return "/letters/" + id;
+      }
+    },
+    selfies: {
+      index: '/selfies',
+      show: function(id) {
+        return "/selfies/" + id;
+      },
+      gallery: '/selfies/gallery',
+      celebrities: '/selfies/celebrities'
+    },
     companies: {
-      index: '/companies.json'
+      index: '/companies'
     },
     stories: {
-      index: '/stories.json',
+      index: '/stories',
       show: function(id) {
-        return "/stories/" + id + ".json";
+        return "/stories/" + id;
       },
-      search: '/stories/search.json'
+      search: '/stories/search'
     },
     articles: {
-      press: '/articles/press.json'
+      press: '/articles/press'
     }
   };
 
@@ -51,11 +72,11 @@ FWD.URL = (function() {
         return function() {
           var args;
           args = 1 <= arguments.length ? slice.call(arguments, 0) : [];
-          return _this.host.concat(path.apply(null, args));
+          return _this.host.concat(path.apply(null, args), '.json');
         };
       })(this);
     } else {
-      return this.host.concat(path);
+      return this.host.concat(path, '.json');
     }
   };
 
@@ -275,6 +296,102 @@ FWD.Company = (function(superClass) {
   };
 
   return Company;
+
+})(FWD.Model);
+
+var extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+  hasProp = {}.hasOwnProperty;
+
+FWD.Legislator = (function(superClass) {
+  extend(Legislator, superClass);
+
+  function Legislator() {
+    return Legislator.__super__.constructor.apply(this, arguments);
+  }
+
+  Legislator.index = FWD.Factory.loadPageFunc({
+    url: FWD.URL["for"]('legislators#index'),
+    collectionName: 'legislators',
+    model: Legislator
+  });
+
+  Legislator.search = FWD.Factory.loadPageFunc({
+    url: FWD.URL["for"]('legislators#search'),
+    collectionName: 'legislators',
+    model: Legislator
+  });
+
+  Legislator.show = FWD.Factory.loadResourceFunc({
+    url: FWD.URL["for"]('legislators#show'),
+    jsonField: 'legislator',
+    model: Legislator
+  });
+
+  return Legislator;
+
+})(FWD.Model);
+
+var extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+  hasProp = {}.hasOwnProperty;
+
+FWD.Letter = (function(superClass) {
+  extend(Letter, superClass);
+
+  function Letter() {
+    return Letter.__super__.constructor.apply(this, arguments);
+  }
+
+  Letter.index = FWD.Factory.loadPageFunc({
+    url: FWD.URL["for"]('letters#index'),
+    collectionName: 'letters',
+    model: Letter
+  });
+
+  Letter.show = FWD.Factory.loadResourceFunc({
+    url: FWD.URL["for"]('letters#show'),
+    jsonField: 'letter',
+    model: Letter
+  });
+
+  return Letter;
+
+})(FWD.Model);
+
+var extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+  hasProp = {}.hasOwnProperty;
+
+FWD.Selfie = (function(superClass) {
+  extend(Selfie, superClass);
+
+  function Selfie() {
+    return Selfie.__super__.constructor.apply(this, arguments);
+  }
+
+  Selfie.index = FWD.Factory.loadPageFunc({
+    url: FWD.URL["for"]('selfies#index'),
+    collectionName: 'selfies',
+    model: Selfie
+  });
+
+  Selfie.show = FWD.Factory.loadResourceFunc({
+    url: FWD.URL["for"]('selfies#show'),
+    jsonField: 'selfie',
+    model: Selfie
+  });
+
+  Selfie.gallery = FWD.Factory.loadPageFunc({
+    url: FWD.URL["for"]('selfies#gallery'),
+    collectionName: 'selfies',
+    model: Selfie
+  });
+
+  Selfie.celebrities = FWD.Factory.loadPageFunc({
+    url: FWD.URL["for"]('selfies#celebrities'),
+    collectionName: 'selfies',
+    model: Selfie
+  });
+
+  return Selfie;
 
 })(FWD.Model);
 

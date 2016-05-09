@@ -9,5 +9,5 @@ QUnit.module 'FWD.URL', ->
       show: (id)-> "/people/#{id}"
       data: '/people/info'
 
-    assert.equal FWD.URL.for('users#data'), 'https://app.fwd.us/api/v1/people/info', 'Static path'
-    assert.equal FWD.URL.for('users#show')(321), 'https://app.fwd.us/api/v1/people/321', 'Dynamic path'
+    assert.equal FWD.URL.for('users#data'), 'https://app.fwd.us/api/v1/people/info.json', 'Static path'
+    assert.equal FWD.URL.for('users#show')(321), 'https://app.fwd.us/api/v1/people/321.json', 'Dynamic path'
