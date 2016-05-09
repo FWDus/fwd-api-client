@@ -12,6 +12,8 @@
 
 
 ### Usage
+See demo [here](http://cdn.fwd.us/github/fwd-api-client/demo.html).  
+
 All API wrapper methods return [jQuery Promise](https://api.jquery.com/promise/).  
 You can chain a promise with [.then(doneCallback, failCallback)](https://api.jquery.com/deferred.then/), 
 [.done(callback)](https://api.jquery.com/deferred.done/), 
@@ -73,7 +75,7 @@ Most of API methods support pagination.
 ### FWD.Story
 `FWD.Story.index([pagination_params])` - fetch a page of stories  
 `FWD.Story.search([pagination_and_filter_params])` - fetch a page of stories filtered by passed criteria  
-`FWD.Story.searchAll([pagination_and_filter_params])` - fetch all stories filtered by passed criteria  
+`FWD.Story.searchAll([filter_params])` - fetch all stories filtered by passed criteria  
 `FWD.Story#company()` - fetch Story associated company    
 
 Available Story filter/pagination params:
