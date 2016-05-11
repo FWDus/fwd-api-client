@@ -1,7 +1,8 @@
 class FWD.Article extends FWD.Model
-  @press: FWD.Factory.loadPageFunc(
-    url: FWD.URL.for('articles#press'),
-    collectionName: 'articles',
-    model: this,
-    arrayParams: ['tags']
-  )
+  @press: (getParams)=>
+    FWD.Api.getModelPage
+      url: FWD.URL.for('articles#press'),
+      jsonCollection: 'articles',
+      modelClass: this,
+      arrayParams: ['tags']
+      params: getParams
