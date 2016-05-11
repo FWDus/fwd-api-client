@@ -1,22 +1,17 @@
 QUnit.module 'FWD.Company', ->
-
+  
   QUnit.test 'FWD.Company.loadAll()', (assert)->
-    TestHelpers.testGetModelCollectionAllPages({
-      func: FWD.Company.loadAll
-      collectionField: 'companies'
+    TestHelpers.testGetAllModels assert, FWD.Company.loadAll,
       url: 'https://app.fwd.us/api/v1/companies.json'
+      jsonCollection: 'companies'
       modelClass: FWD.Company
-    }, assert)
-
+      cacheResponse: true
 
   QUnit.test 'FWD.Company.load()', (assert)->
-    TestHelpers.testGetModelCollectionPage({
-      func: FWD.Company.load
-      collectionField: 'companies'
+    TestHelpers.testGetModelPage assert, FWD.Company.load,
       url: 'https://app.fwd.us/api/v1/companies.json'
+      jsonCollection: 'companies'
       modelClass: FWD.Company
-    }, assert)
-
 
   QUnit.test 'FWD.Company.find()', (assert)->
     companies = [

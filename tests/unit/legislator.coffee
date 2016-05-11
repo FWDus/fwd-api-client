@@ -1,24 +1,19 @@
 QUnit.module 'FWD.Legislator', ->
+
   QUnit.test "FWD.Legislator.index()", (assert)->
-    TestHelpers.testGetModelCollectionPage({
-      func: FWD.Legislator.index
-      collectionField: 'legislators'
+    TestHelpers.testGetModelPage assert, FWD.Legislator.index,
       url: 'https://app.fwd.us/api/v1/legislators.json'
+      jsonCollection: 'legislators'
       modelClass: FWD.Legislator
-    }, assert)
 
   QUnit.test "FWD.Legislator.search()", (assert)->
-    TestHelpers.testGetModelCollectionPage({
-      func: FWD.Legislator.search
-      collectionField: 'legislators'
+    TestHelpers.testGetModelPage assert, FWD.Legislator.search,
       url: 'https://app.fwd.us/api/v1/legislators/search.json'
+      jsonCollection: 'legislators'
       modelClass: FWD.Legislator
-    }, assert)
 
   QUnit.test "FWD.Legislator.show()", (assert)->
-    TestHelpers.testGetResource({
-      func: FWD.Legislator.show
+    TestHelpers.testGetModel assert, FWD.Legislator.show,
+      url: (legislator_id)-> "https://app.fwd.us/api/v1/legislators/#{legislator_id}.json"
       jsonField: 'legislator'
-      url: (bioguide_id)-> "https://app.fwd.us/api/v1/legislators/#{bioguide_id}.json"
       modelClass: FWD.Legislator
-    }, assert)

@@ -1,41 +1,30 @@
 QUnit.module 'FWD.Story', ->
+
   QUnit.test "FWD.Story.index()", (assert)->
-    TestHelpers.testGetModelCollectionPage({
-      func: FWD.Story.index
-      collectionField: 'stories'
+    TestHelpers.testGetModelPage assert, FWD.Story.index,
+      jsonCollection: 'stories'
       url: 'https://app.fwd.us/api/v1/stories.json'
       modelClass: FWD.Story
-    }, assert)
-
 
   QUnit.test "FWD.Story.show()", (assert)->
-    TestHelpers.testGetResource({
-      func: FWD.Story.show
+    TestHelpers.testGetModel assert, FWD.Story.show,
       jsonField: 'story'
       url: (id)-> "https://app.fwd.us/api/v1/stories/#{id}.json"
       modelClass: FWD.Story
-    }, assert)
-
 
   QUnit.test "FWD.Story.search()", (assert)->
-    TestHelpers.testGetModelCollectionPage({
-      func: FWD.Story.search
-      collectionField: 'stories'
+    TestHelpers.testGetModelPage assert, FWD.Story.search,
+      jsonCollection: 'stories'
       url: 'https://app.fwd.us/api/v1/stories/search.json'
-      modelClass: FWD.Story
       arrayParams: ['company', 'tags']
-    }, assert)
-
+      modelClass: FWD.Story
 
   QUnit.test "FWD.Story.searchAll()", (assert)->
-    TestHelpers.testGetModelCollectionAllPages({
-      func: FWD.Story.search
-      collectionField: 'stories'
+    TestHelpers.testGetAllModels assert, FWD.Story.searchAll,
       url: 'https://app.fwd.us/api/v1/stories/search.json'
+      jsonCollection: 'stories'
       modelClass: FWD.Story
       arrayParams: ['company', 'tags']
-    }, assert)
-
 
   QUnit.test "FWD.Story#company() when #company_id is present", (assert)->
     story = new FWD.Story(company_id: 123)

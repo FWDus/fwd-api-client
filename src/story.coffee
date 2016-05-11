@@ -1,25 +1,34 @@
 class FWD.Story extends FWD.Model
-  @index: FWD.Factory.loadPageFunc
-    url: FWD.URL.for('stories#index'),
-    collectionName: 'stories',
-    model: this
 
-  @show: FWD.Factory.loadResourceFunc
-    url: FWD.URL.for('stories#show'),
-    jsonField: 'story',
-    model: this
+  @index: (getParams)=>
+    FWD.Api.getModelPage
+      url: FWD.URL.for('stories#index')
+      jsonCollection: 'stories'
+      modelClass: this
+      params: getParams
 
-  @search: FWD.Factory.loadPageFunc
-    url: FWD.URL.for('stories#search'),
-    collectionName: 'stories',
-    model: this,
-    arrayParams: ['company', 'tags']
+  @show: (story_id)=>
+    url = FWD.URL.for('stories#show')
+    FWD.Api.getModel
+      url: url(story_id)
+      jsonField: 'story'
+      modelClass: this
 
-  @searchAll: FWD.Factory.loadAllFunc
-    url: FWD.URL.for('stories#search'),
-    collectionName: 'stories',
-    model: this,
-    arrayParams: ['company', 'tags']
+  @search: (getParams)=>
+    FWD.Api.getModelPage
+      url: FWD.URL.for('stories#search')
+      jsonCollection: 'stories'
+      arrayParams: ['company', 'tags']
+      modelClass: this
+      params: getParams
+
+  @searchAll: (getParams)=>
+    FWD.Api.getAllModels
+      url: FWD.URL.for('stories#search')
+      jsonCollection: 'stories'
+      modelClass: this
+      arrayParams: ['company', 'tags']
+      params: getParams
 
   company: =>
     if @get('company_id')

@@ -1,16 +1,22 @@
 class FWD.Legislator extends FWD.Model
-  @index: FWD.Factory.loadPageFunc
-    url: FWD.URL.for('legislators#index'),
-    collectionName: 'legislators',
-    model: this
+  @index: (getParams)=>
+    FWD.Api.getModelPage
+      url: FWD.URL.for('legislators#index')
+      jsonCollection: 'legislators'
+      modelClass: this
+      params: getParams
 
-  @search: FWD.Factory.loadPageFunc
-    url: FWD.URL.for('legislators#search'),
-    collectionName: 'legislators',
-    model: this
+  @search: (getParams)=>
+    FWD.Api.getModelPage
+      url: FWD.URL.for('legislators#search')
+      jsonCollection: 'legislators'
+      modelClass: this
+      params: getParams
 
-  @show: FWD.Factory.loadResourceFunc
-    url: FWD.URL.for('legislators#show'),
-    jsonField: 'legislator',
-    model: this
+  @show: (legislator_id)=>
+    url = FWD.URL.for('legislators#show')
+    FWD.Api.getModel
+      url: url(legislator_id)
+      jsonField: 'legislator'
+      modelClass: this
 

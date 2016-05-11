@@ -1,16 +1,19 @@
 class FWD.Company extends FWD.Model
-  @loadAll: FWD.Factory.loadAllFunc(
-    url: FWD.URL.for('companies#index'),
-    collectionName: 'companies',
-    model: this,
-    cache: true
-  )
 
-  @load: FWD.Factory.loadPageFunc(
-    url: FWD.URL.for('companies#index'),
-    collectionName: 'companies',
-    model: this
-  )
+  @loadAll: (getParams = {})=>
+    FWD.Api.getAllModels
+      url: FWD.URL.for('companies#index')
+      jsonCollection: 'companies'
+      modelClass: this
+      cacheResponse: true
+      params: getParams
+
+  @load: (getParams)=>
+    FWD.Api.getModelPage
+      url: FWD.URL.for('companies#index'),
+      jsonCollection: 'companies',
+      modelClass: this,
+      params: getParams
 
   @find: (companyId)=>
     $.Deferred((defer)=>

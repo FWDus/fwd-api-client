@@ -1,5 +1,39 @@
+var extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+  hasProp = {}.hasOwnProperty;
+
 QUnit.module('FWD.Api', function() {
-  var stubApiGetSeq, stubGetJSON;
+  var TestSubModel, paginatedCollectionPayload, stubApiGetSeq, stubGetJSON, userAttrCollection;
+  TestSubModel = (function(superClass) {
+    extend(TestSubModel, superClass);
+
+    function TestSubModel() {
+      return TestSubModel.__super__.constructor.apply(this, arguments);
+    }
+
+    return TestSubModel;
+
+  })(FWD.Model);
+  userAttrCollection = function() {
+    return [
+      {
+        id: 123,
+        first_name: 'Yukihiro',
+        last_name: 'Matsumoto'
+      }, {
+        id: 124,
+        first_name: 'Yehuda',
+        last_name: 'Katz'
+      }
+    ];
+  };
+  paginatedCollectionPayload = function() {
+    return {
+      user_collection: userAttrCollection(),
+      page: 1,
+      total_pages: 1,
+      total_count: 2
+    };
+  };
   stubGetJSON = function(options) {
     var assert;
     assert = options.assert;
@@ -59,7 +93,7 @@ QUnit.module('FWD.Api', function() {
     });
     return jqXHR.then(assert.async());
   });
-  return QUnit.test("FWD.Api.getAllPages() - on success - makes a sequence of requests over all pages, returns aggregated data", function(assert) {
+  QUnit.test("FWD.Api.getAllPages() - on success - makes a sequence of requests over all pages, returns aggregated data", function(assert) {
     var done, expectedBooks, expectedParams, expectedUrl;
     expectedUrl = 'http://example.com/books';
     expectedParams = {
@@ -105,35 +139,155 @@ QUnit.module('FWD.Api', function() {
       return done();
     });
   });
+  QUnit.test('FWD.Api.getAllModels()', function(assert) {
+    var done, expectedModelAttrs, promise;
+    expectedModelAttrs = userAttrCollection();
+    Stubs.stub(FWD.Api, 'getAllPages', function(url, jsonCollection, params) {
+      assert.equal(url, 'http://example.com/users.json');
+      assert.equal(jsonCollection, 'users');
+      assert.equal(params.param, 'some value');
+      assert.equal(params.filter_tags, 'developer,web');
+      assert.equal(params.filter_categories, 'js,bash,devOps');
+      return TestHelpers.resolvedPromise(expectedModelAttrs);
+    });
+    promise = FWD.Api.getAllModels({
+      url: 'http://example.com/users.json',
+      jsonCollection: 'users',
+      modelClass: TestSubModel,
+      arrayParams: ['filter_tags', 'filter_categories'],
+      params: {
+        param: 'some value',
+        filter_tags: ['developer', 'web'],
+        filter_categories: ['js', 'bash', 'devOps']
+      }
+    });
+    done = assert.async();
+    return promise.done((function(_this) {
+      return function(modelCollection) {
+        assert.ok(modelCollection[0] instanceof TestSubModel);
+        assert.ok(modelCollection[1] instanceof TestSubModel);
+        assert.equal(modelCollection[0].get('id'), 123);
+        assert.equal(modelCollection[0].get('first_name'), 'Yukihiro');
+        assert.equal(modelCollection[0].get('last_name'), 'Matsumoto');
+        assert.equal(modelCollection[1].get('id'), 124);
+        assert.equal(modelCollection[1].get('first_name'), 'Yehuda');
+        assert.equal(modelCollection[1].get('last_name'), 'Katz');
+        return done();
+      };
+    })(this));
+  });
+  QUnit.test('FWD.Api.getModel()', function(assert) {
+    var done, jsonPayload, promise;
+    jsonPayload = {
+      user: {
+        id: 321,
+        first_name: 'User',
+        last_name: 'Userson'
+      }
+    };
+    Stubs.stub(FWD.Api, 'get', function(url) {
+      assert.equal(url, 'http://example.com/users/123.json');
+      return TestHelpers.resolvedPromise(jsonPayload);
+    });
+    promise = FWD.Api.getModel({
+      url: 'http://example.com/users/123.json',
+      jsonField: 'user',
+      modelClass: TestSubModel
+    });
+    done = assert.async();
+    return promise.done(function(model) {
+      assert.ok(model instanceof TestSubModel);
+      assert.equal(model.get('id'), '321');
+      assert.equal(model.get('first_name'), 'User');
+      assert.equal(model.get('last_name'), 'Userson');
+      return done();
+    });
+  });
+  QUnit.test('FWD.Api.getPage() - should call FWD.Api.get with converted array params', function(assert) {
+    var payload, promise, requestParams, requestPromise;
+    requestParams = {
+      category: 'users',
+      page: 1,
+      tags: ['daca', 'dapa']
+    };
+    payload = paginatedCollectionPayload();
+    requestPromise = TestHelpers.resolvedPromise(payload);
+    Stubs.stub(FWD.Api, 'get', function(url, params) {
+      assert.equal(url, 'http://example.com/collection.json', 'URL passed correctly');
+      assert.equal(params.category, 'users');
+      assert.equal(params.page, 1);
+      assert.equal(params.tags, 'daca,dapa', 'Array params converted');
+      return requestPromise;
+    });
+    promise = FWD.Api.getPage({
+      url: 'http://example.com/collection.json',
+      arrayParams: ['tags'],
+      params: requestParams
+    });
+    return assert.equal(promise, requestPromise, 'Get request promise returned');
+  });
+  return QUnit.test('FWD.Api.getModelPage() - returns model collection', function(assert) {
+    var done, promise, requestParams;
+    requestParams = {
+      category: 'users',
+      page: 1,
+      tags: ['daca', 'dapa']
+    };
+    Stubs.stub(FWD.Api, 'getPage', function(options) {
+      assert.equal(options.url, 'http://example.com/collection.json', 'URL passed correctly');
+      assert.deepEqual(options.arrayParams, ['tags'], 'array param names passed correctly');
+      assert.equal(options.params, requestParams, 'request params passed correctly');
+      return TestHelpers.resolvedPromise(paginatedCollectionPayload());
+    });
+    promise = FWD.Api.getModelPage({
+      url: 'http://example.com/collection.json',
+      arrayParams: ['tags'],
+      params: requestParams,
+      modelClass: TestSubModel,
+      jsonCollection: 'user_collection'
+    });
+    done = assert.async();
+    return promise.done(function(modelCollection) {
+      assert.equal(modelCollection.length, 2);
+      assert.ok(modelCollection[0] instanceof TestSubModel);
+      assert.ok(modelCollection[1] instanceof TestSubModel);
+      assert.equal(modelCollection[0].get('id'), 123);
+      assert.equal(modelCollection[0].get('first_name'), 'Yukihiro');
+      assert.equal(modelCollection[0].get('last_name'), 'Matsumoto');
+      assert.equal(modelCollection[1].get('id'), 124);
+      assert.equal(modelCollection[1].get('first_name'), 'Yehuda');
+      assert.equal(modelCollection[1].get('last_name'), 'Katz');
+      return done();
+    });
+  });
 });
 
 QUnit.module('FWD.Article', function() {
   return QUnit.test('FWD.Article.press()', function(assert) {
-    return TestHelpers.testGetModelCollectionPage({
-      func: FWD.Article.press,
-      collectionField: 'articles',
+    return TestHelpers.testGetModelPage(assert, FWD.Article.press, {
       url: 'https://app.fwd.us/api/v1/articles/press.json',
-      modelClass: FWD.Article
-    }, assert);
+      jsonCollection: 'articles',
+      modelClass: FWD.Article,
+      arrayParams: ['tags']
+    });
   });
 });
 
 QUnit.module('FWD.Company', function() {
   QUnit.test('FWD.Company.loadAll()', function(assert) {
-    return TestHelpers.testGetModelCollectionAllPages({
-      func: FWD.Company.loadAll,
-      collectionField: 'companies',
+    return TestHelpers.testGetAllModels(assert, FWD.Company.loadAll, {
       url: 'https://app.fwd.us/api/v1/companies.json',
-      modelClass: FWD.Company
-    }, assert);
+      jsonCollection: 'companies',
+      modelClass: FWD.Company,
+      cacheResponse: true
+    });
   });
   QUnit.test('FWD.Company.load()', function(assert) {
-    return TestHelpers.testGetModelCollectionPage({
-      func: FWD.Company.load,
-      collectionField: 'companies',
+    return TestHelpers.testGetModelPage(assert, FWD.Company.load, {
       url: 'https://app.fwd.us/api/v1/companies.json',
+      jsonCollection: 'companies',
       modelClass: FWD.Company
-    }, assert);
+    });
   });
   return QUnit.test('FWD.Company.find()', function(assert) {
     var companies, done;
@@ -157,136 +311,6 @@ QUnit.module('FWD.Company', function() {
   });
 });
 
-var extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-  hasProp = {}.hasOwnProperty;
-
-QUnit.module('FWD.Factory', function() {
-  var SubModel;
-  SubModel = (function(superClass) {
-    extend(SubModel, superClass);
-
-    function SubModel() {
-      return SubModel.__super__.constructor.apply(this, arguments);
-    }
-
-    return SubModel;
-
-  })(FWD.Model);
-  QUnit.test("FWD.Factory.loadPageFunc()", function(assert) {
-    var done, expectedParams, expectedUrl, func, pageData;
-    expectedUrl = 'http://example.com/collection';
-    expectedParams = {
-      param1: 'some value',
-      tags: ['developer', 'web']
-    };
-    pageData = {
-      items: [
-        {
-          first_name: 'Yukihiro',
-          last_name: 'Matsumoto'
-        }, {
-          first_name: 'Yehuda',
-          last_name: 'Katz'
-        }
-      ]
-    };
-    Stubs.stub(FWD.Api, 'get', function(url, params) {
-      assert.equal(url, expectedUrl, 'Url passed properly');
-      assert.deepEqual(params, {
-        param1: 'some value',
-        tags: 'developer,web'
-      }, 'Params passed properly');
-      return TestHelpers.resolvedPromise(pageData);
-    });
-    func = FWD.Factory.loadPageFunc({
-      url: expectedUrl,
-      collectionName: 'items',
-      model: SubModel,
-      arrayParams: ['tags']
-    });
-    done = assert.async();
-    return func(expectedParams).then(function(modelCollection) {
-      assert.equal(modelCollection[0].get('first_name'), 'Yukihiro');
-      assert.equal(modelCollection[0].get('last_name'), 'Matsumoto');
-      assert.equal(modelCollection[1].get('first_name'), 'Yehuda');
-      assert.equal(modelCollection[1].get('last_name'), 'Katz');
-      return done();
-    });
-  });
-  QUnit.test("FWD.Factory.loadAllFunc()", function(assert) {
-    var aggregatedAttrs, done, expectedParams, expectedUrl, func;
-    expectedUrl = 'http://example.com/collection';
-    expectedParams = {
-      param1: 'some value',
-      tags: ['developer', 'web']
-    };
-    func = FWD.Factory.loadAllFunc({
-      url: expectedUrl,
-      collectionName: 'items',
-      model: SubModel,
-      arrayParams: ['tags']
-    });
-    aggregatedAttrs = [
-      {
-        first_name: 'Yukihiro',
-        last_name: 'Matsumoto'
-      }, {
-        first_name: 'Yehuda',
-        last_name: 'Katz'
-      }
-    ];
-    Stubs.stub(FWD.Api, 'getAllPages', function(url, collectionName, params) {
-      assert.equal(url, expectedUrl, 'Url passed properly');
-      assert.equal(collectionName, 'items', 'Collection Name passed properly');
-      assert.deepEqual(params, {
-        param1: 'some value',
-        tags: 'developer,web'
-      }, 'Params passed properly');
-      return TestHelpers.resolvedPromise(aggregatedAttrs);
-    });
-    done = assert.async();
-    return func(expectedParams).then(function(itemPageCollection) {
-      assert.equal(itemPageCollection[0].get('first_name'), 'Yukihiro');
-      assert.equal(itemPageCollection[0].get('last_name'), 'Matsumoto');
-      assert.equal(itemPageCollection[1].get('first_name'), 'Yehuda');
-      assert.equal(itemPageCollection[1].get('last_name'), 'Katz');
-      return done();
-    });
-  });
-  QUnit.test("FWD.Factory.convertArrayParams()", function(assert) {
-    var params;
-    params = {
-      name: 'User Userson',
-      tags: ['one', 'two', 'three and four']
-    };
-    return assert.deepEqual(FWD.Factory.convertArrayParams(params, ['tags']), {
-      name: 'User Userson',
-      tags: 'one,two,three and four'
-    });
-  });
-  QUnit.test("FWD.Factory.arrayParam()", function(assert) {
-    assert.equal(FWD.Factory.arrayParam('Some string'), 'Some string');
-    return assert.equal(FWD.Factory.arrayParam(['list', 'of', 'different tags']), 'list,of,different tags');
-  });
-  return QUnit.test("FWD.Factory.attributesToModels()", function(assert) {
-    var attrList, models;
-    attrList = [
-      {
-        first_name: 'Homer',
-        last_name: 'Simpson'
-      }, {
-        first_name: 'User',
-        last_name: 'Userson'
-      }
-    ];
-    models = FWD.Factory.attributesToModels(attrList, SubModel);
-    assert.equal(models[0].get('first_name'), 'Homer');
-    assert.equal(models[0].get('last_name'), 'Simpson');
-    assert.equal(models[1].get('first_name'), 'User');
-    return assert.equal(models[1].get('last_name'), 'Userson');
-  });
-});
-
 QUnit.module('FWD init', function() {
   QUnit.test('FWD.init()', function(assert) {
     FWD.init('some key');
@@ -300,51 +324,46 @@ QUnit.module('FWD init', function() {
 
 QUnit.module('FWD.Legislator', function() {
   QUnit.test("FWD.Legislator.index()", function(assert) {
-    return TestHelpers.testGetModelCollectionPage({
-      func: FWD.Legislator.index,
-      collectionField: 'legislators',
+    return TestHelpers.testGetModelPage(assert, FWD.Legislator.index, {
       url: 'https://app.fwd.us/api/v1/legislators.json',
+      jsonCollection: 'legislators',
       modelClass: FWD.Legislator
-    }, assert);
+    });
   });
   QUnit.test("FWD.Legislator.search()", function(assert) {
-    return TestHelpers.testGetModelCollectionPage({
-      func: FWD.Legislator.search,
-      collectionField: 'legislators',
+    return TestHelpers.testGetModelPage(assert, FWD.Legislator.search, {
       url: 'https://app.fwd.us/api/v1/legislators/search.json',
+      jsonCollection: 'legislators',
       modelClass: FWD.Legislator
-    }, assert);
+    });
   });
   return QUnit.test("FWD.Legislator.show()", function(assert) {
-    return TestHelpers.testGetResource({
-      func: FWD.Legislator.show,
-      jsonField: 'legislator',
-      url: function(bioguide_id) {
-        return "https://app.fwd.us/api/v1/legislators/" + bioguide_id + ".json";
+    return TestHelpers.testGetModel(assert, FWD.Legislator.show, {
+      url: function(legislator_id) {
+        return "https://app.fwd.us/api/v1/legislators/" + legislator_id + ".json";
       },
+      jsonField: 'legislator',
       modelClass: FWD.Legislator
-    }, assert);
+    });
   });
 });
 
 QUnit.module('FWD.Letter', function() {
   QUnit.test('FWD.Letter.index()', function(assert) {
-    return TestHelpers.testGetModelCollectionPage({
-      func: FWD.Letter.index,
-      collectionField: 'letters',
+    return TestHelpers.testGetModelPage(assert, FWD.Letter.index, {
+      jsonCollection: 'letters',
       url: 'https://app.fwd.us/api/v1/letters.json',
       modelClass: FWD.Letter
-    }, assert);
+    });
   });
   return QUnit.test('FWD.Letter.show()', function(assert) {
-    return TestHelpers.testGetResource({
-      func: FWD.Letter.show,
+    return TestHelpers.testGetModel(assert, FWD.Letter.show, {
       jsonField: 'letter',
+      modelClass: FWD.Letter,
       url: function(letter_id) {
         return "https://app.fwd.us/api/v1/letters/" + letter_id + ".json";
-      },
-      modelClass: FWD.Letter
-    }, assert);
+      }
+    });
   });
 });
 
@@ -366,77 +385,69 @@ QUnit.module('FWD.Model', function() {
 
 QUnit.module('FWD.Selfie', function() {
   QUnit.test('FWD.Selfie.index()', function(assert) {
-    return TestHelpers.testGetModelCollectionPage({
-      func: FWD.Selfie.index,
-      collectionField: 'selfies',
+    return TestHelpers.testGetModelPage(assert, FWD.Selfie.index, {
+      jsonCollection: 'selfies',
       url: 'https://app.fwd.us/api/v1/selfies.json',
       modelClass: FWD.Selfie
-    }, assert);
+    });
   });
   QUnit.test('FWD.Selfie.show()', function(assert) {
-    return TestHelpers.testGetResource({
-      func: FWD.Selfie.show,
+    return TestHelpers.testGetModel(assert, FWD.Selfie.show, {
       jsonField: 'selfie',
       url: function(selfie_id) {
         return "https://app.fwd.us/api/v1/selfies/" + selfie_id + ".json";
       },
       modelClass: FWD.Selfie
-    }, assert);
+    });
   });
   QUnit.test('FWD.Selfie.gallery()', function(assert) {
-    return TestHelpers.testGetModelCollectionPage({
-      func: FWD.Selfie.gallery,
-      collectionField: 'selfies',
+    return TestHelpers.testGetModelPage(assert, FWD.Selfie.gallery, {
+      jsonCollection: 'selfies',
       url: 'https://app.fwd.us/api/v1/selfies/gallery.json',
       modelClass: FWD.Selfie
-    }, assert);
+    });
   });
   return QUnit.test('FWD.Selfie.celebrities()', function(assert) {
-    return TestHelpers.testGetModelCollectionPage({
-      func: FWD.Selfie.celebrities,
-      collectionField: 'selfies',
+    return TestHelpers.testGetModelPage(assert, FWD.Selfie.celebrities, {
+      jsonCollection: 'selfies',
       url: 'https://app.fwd.us/api/v1/selfies/celebrities.json',
       modelClass: FWD.Selfie
-    }, assert);
+    });
   });
 });
 
 QUnit.module('FWD.Story', function() {
   QUnit.test("FWD.Story.index()", function(assert) {
-    return TestHelpers.testGetModelCollectionPage({
-      func: FWD.Story.index,
-      collectionField: 'stories',
+    return TestHelpers.testGetModelPage(assert, FWD.Story.index, {
+      jsonCollection: 'stories',
       url: 'https://app.fwd.us/api/v1/stories.json',
       modelClass: FWD.Story
-    }, assert);
+    });
   });
   QUnit.test("FWD.Story.show()", function(assert) {
-    return TestHelpers.testGetResource({
-      func: FWD.Story.show,
+    return TestHelpers.testGetModel(assert, FWD.Story.show, {
       jsonField: 'story',
       url: function(id) {
         return "https://app.fwd.us/api/v1/stories/" + id + ".json";
       },
       modelClass: FWD.Story
-    }, assert);
+    });
   });
   QUnit.test("FWD.Story.search()", function(assert) {
-    return TestHelpers.testGetModelCollectionPage({
-      func: FWD.Story.search,
-      collectionField: 'stories',
+    return TestHelpers.testGetModelPage(assert, FWD.Story.search, {
+      jsonCollection: 'stories',
       url: 'https://app.fwd.us/api/v1/stories/search.json',
-      modelClass: FWD.Story,
-      arrayParams: ['company', 'tags']
-    }, assert);
+      arrayParams: ['company', 'tags'],
+      modelClass: FWD.Story
+    });
   });
   QUnit.test("FWD.Story.searchAll()", function(assert) {
-    return TestHelpers.testGetModelCollectionAllPages({
-      func: FWD.Story.search,
-      collectionField: 'stories',
+    return TestHelpers.testGetAllModels(assert, FWD.Story.searchAll, {
       url: 'https://app.fwd.us/api/v1/stories/search.json',
+      jsonCollection: 'stories',
       modelClass: FWD.Story,
       arrayParams: ['company', 'tags']
-    }, assert);
+    });
   });
   QUnit.test("FWD.Story#company() when #company_id is present", function(assert) {
     var done, expectedCompany, story;

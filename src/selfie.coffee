@@ -1,22 +1,31 @@
 class FWD.Selfie extends FWD.Model
-  @index: FWD.Factory.loadPageFunc
-    url: FWD.URL.for('selfies#index'),
-    collectionName: 'selfies',
-    model: this
 
-  @show: FWD.Factory.loadResourceFunc
-    url: FWD.URL.for('selfies#show'),
-    jsonField: 'selfie',
-    model: this
+  @index: (getParams)=>
+    FWD.Api.getModelPage
+      url: FWD.URL.for('selfies#index')
+      jsonCollection: 'selfies'
+      modelClass: this
+      params: getParams
 
-  @gallery: FWD.Factory.loadPageFunc
-    url: FWD.URL.for('selfies#gallery'),
-    collectionName: 'selfies',
-    model: this
+  @show: (selfie_id)=>
+    url = FWD.URL.for('selfies#show')
+    FWD.Api.getModel
+      url: url(selfie_id)
+      jsonField: 'selfie'
+      modelClass: this
 
-  @celebrities: FWD.Factory.loadPageFunc
-    url: FWD.URL.for('selfies#celebrities'),
-    collectionName: 'selfies',
-    model: this
+  @gallery: (getParams)=>
+    FWD.Api.getModelPage
+      url: FWD.URL.for('selfies#gallery')
+      jsonCollection: 'selfies'
+      modelClass: this
+      params: getParams
+
+  @celebrities: (getParams)=>
+    FWD.Api.getModelPage
+      url: FWD.URL.for('selfies#celebrities')
+      jsonCollection: 'selfies'
+      modelClass: this
+      params: getParams
 
   
