@@ -19,6 +19,7 @@
       <li class="tabs-title is-active"><a href="#panel-articles">Articles</a></li>
       <li class="tabs-title"><a href="#panel-stories">Stories</a></li>
       <li class="tabs-title"><a href="#panel-companies" aria-selected="true">Companies</a></li>
+      <li class="tabs-title"><a href="#panel-legislators">Legislators</a></li>
     </ul>
 
     <div class="tabs-content" data-tabs-content="example-tabs">
@@ -47,14 +48,15 @@
           <tbody></tbody>
         </table>
       </div>
+
+      <div class="tabs-panel" id="panel-legislators">
+        <h3>Legislators</h3>
+        <a href="#" class="button legislators-load-btn">Load CA Legislators</a>
+        <div id="legislators"></div>
+      </div>
     </div>
   </div>
 </div>
-
-<script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/foundation/6.2.1/foundation.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
-<script src="../dist/fwd-api.full.js"></script>
 
 <script type="text/x-handlebars-template" id="pressTemplate">
   <div class="media-object">
@@ -77,7 +79,6 @@
     </div>
   </div>
 </script>
-
 
 <script type="text/x-handlebars-template" id="storyTemplate">
   {{#if photo_large}}
@@ -104,114 +105,24 @@
   </tr>
 </script>
 
-<script>
-  $.fn.toggleShorten = function(){
-    this.each(function(){
-      var $self = $(this);
-      var fullContent = $self.html();
-      var previewLength = 600;
-      if (fullContent.length < previewLength) { return ; }
-
-      var previewContent = $self.text().substr(0, previewLength);
-      var showPreview = false;
-
-      var onBtnClick = function(e){
-        e.preventDefault();
-
-        showPreview = !showPreview;
-        if (showPreview) {
-          $self.html(previewContent).append('... <a href="#">Expand &gt;&gt;</a>');
-        } else {
-          $self.html(fullContent).append(' <a href="#">&lt;&lt; Collapse</a>');
-        }
-        $self.find('a').click(onBtnClick);
-      };
-      $('<a></a>').click(onBtnClick).click();
-    });
-  };
-
-  var image_url = function(url) {
-    return url.startsWith('//') ? 'http:' + url : url;
-  };
-
-  var renderPress = function(articles) {
-    var source = $('#pressTemplate').html();
-    var template = Handlebars.compile(source);
-
-    var html = $.map(articles, function(article) {
-      return template(article.attributes);
-    }).join('<hr />');
-
-    $('.press').html(html)
-  };
-
-  var renderStories = function(stories) {
-    var source = $('#storyTemplate').html();
-    var template = Handlebars.compile(source);
-
-    var $stories = $.map(stories, function(story) {
-      var decoratedAttributes = $.extend(
-          {photo_large_url: image_url(story.attributes.photo_large)},
-          story.attributes
-      );
-      var storyHTML = template(decoratedAttributes);
-      var $story = $('<div class="media-object story"></div>');
-
-      $story.html(storyHTML).find('.story-text').toggleShorten();
-
-      story.company().done(function(company) {
-        var $title = $story.find('.title');
-        var html = $title.html();
-        html += ' <small>'+ company.get('name') +'</small>';
-        $title.html(html);
-      });
-
-      return $story;
-    });
-
-    var $container = $('.stories').html('');
-    $.each($stories, function(ix, $story){
-      $container.append($story);
-      if (ix != $stories.length - 1) {
-        $container.append('<hr />');
-      }
-    });
-  };
-
-  var renderCompanies = function(companies) {
-    var source = $('#companyTemplate').html();
-    var template = Handlebars.compile(source);
-    var $companies = $('.table-companies');
-
-    $companies.find('tbody').html(
-      $.map(companies, function(company){
-        return template(company.attributes)}
-      ).join('')
-    );
-
-    $companies.removeClass('hide');
-  };
-
-  FWD.init('___public_api_key___');
-  $(document).foundation();
-
-  $(function(){
-    $('.companies-load-btn').click(function(e){
-      e.preventDefault();
-      FWD.Company.load().then(renderCompanies);
-    });
-
-    $('.stories-load-btn').click(function(e){
-      e.preventDefault();
-      FWD.Story.index().then(renderStories);
-    });
-
-    $('.press-load-btn').click(function(e){
-      e.preventDefault();
-      FWD.Article.press().then(renderPress);
-    });
-  });
+<script type="text/x-handlebars-template" id="legislatorTemplate">
+  <div class="small-2 columns">
+    <a href="{{ website }}" target="_blank">
+      <img src="{{ photo }}" />
+      <h5 class="text-center">
+        {{ firstname }} {{ lastname }}
+        <br />
+        <small>District #{{ district }}</small>
+      </h5>
+    </a>
+  </div>
 </script>
+
+<script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/foundation/6.2.1/foundation.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
+<script src="../dist/fwd-api.full.js"></script>
+<script src="demo.js"></script>
 
 </body>
 </html>
