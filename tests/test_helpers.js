@@ -108,35 +108,6 @@ TestHelpers = (function() {
     return assert.deepEqual(promise, expectedPromise);
   };
 
-  TestHelpers.testGetResource = function(options, assert) {
-    var apiGetStub, done, expectedURL, func, jsonField, modelClass, obj, payload, url;
-    func = options.func, modelClass = options.modelClass, url = options.url, jsonField = options.jsonField;
-    expectedURL = url;
-    payload = (
-      obj = {},
-      obj["" + jsonField] = {
-        id: 123,
-        randomAttr: 'Attribute value',
-        anotherAttr: 'Another attribute value'
-      },
-      obj
-    );
-    apiGetStub = function(url, arg) {
-      arg;
-      assert.equal(url, expectedURL(123));
-      return this.resolvedPromise(payload);
-    };
-    Stubs.stub(FWD.Api, 'get', apiGetStub);
-    done = assert.async();
-    return func(123).then(function(model) {
-      assert.ok(model instanceof modelClass);
-      assert.equal(model.get('id'), 123);
-      assert.equal(model.get('randomAttr'), 'Attribute value');
-      assert.equal(model.get('anotherAttr'), 'Another attribute value');
-      return done();
-    });
-  };
-
   TestHelpers.testGetModelCollectionPage = function(options, assert) {
     var apiGetStub, arrayParams, collectionField, done, expectedURL, func, modelClass, params, payload, ref, url;
     func = options.func, modelClass = options.modelClass, url = options.url, collectionField = options.collectionField, arrayParams = (ref = options.arrayParams) != null ? ref : [];

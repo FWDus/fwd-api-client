@@ -50,28 +50,6 @@ class TestHelpers
     promise = method(expectedParams)
     assert.deepEqual(promise, expectedPromise)
 
-  @testGetResource: (options, assert)=>
-    {func, modelClass, url, jsonField} = options
-    expectedURL = url
-
-    payload = {"#{jsonField}": {id: 123, randomAttr: 'Attribute value', anotherAttr: 'Another attribute value'}}
-    apiGetStub = (url, {})->
-      assert.equal(url, expectedURL(123))
-      @resolvedPromise(payload)
-
-    Stubs.stub(FWD.Api, 'get', apiGetStub)
-
-    done = assert.async()
-    func(123).then (model)->
-      assert.ok(model instanceof modelClass)
-
-      assert.equal(model.get('id'), 123)
-      assert.equal(model.get('randomAttr'), 'Attribute value')
-      assert.equal(model.get('anotherAttr'), 'Another attribute value')
-
-      done()
-
-
   @testGetModelCollectionPage: (options, assert)=>
     {func, modelClass, url, collectionField, arrayParams = []} = options
     expectedURL = url
